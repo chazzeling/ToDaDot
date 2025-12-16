@@ -1,0 +1,560 @@
+.memo-tab {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 스크롤바 스타일 - 마우스 호버 시에만 표시 */
+.memo-tab::-webkit-scrollbar {
+  width: 12px;
+}
+
+.memo-tab::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memo-tab::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 20px;
+}
+
+.memo-tab:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
+}
+
+.memo-tab::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+  background-clip: padding-box;
+}
+
+.memo-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.memo-tab-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.memo-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.memo-search-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  min-width: 200px;
+}
+
+.memo-search-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.memo-sort-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.memo-sort-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.memo-create-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.memo-create-input-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.memo-create-input-wrapper .memo-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.memo-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.memo-input-narrow {
+  max-width: 300px;
+}
+
+.mood-tracker-icon-btn:hover {
+  background: var(--accent-color) !important;
+  color: white !important;
+  transform: scale(1.05);
+}
+
+.memo-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.memo-create-btn {
+  padding: 10px 20px;
+  background: var(--sub-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.memo-create-btn:hover:not(:disabled) {
+  background: var(--sub-color);
+  opacity: 0.9;
+}
+
+.memo-create-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 포스트잇 스타일 그리드 레이아웃 */
+.memo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px; /* 메모 사이 여백 확보 (16px -> 24px) */
+  margin-bottom: 20px;
+}
+
+.memo-sticky-note {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px;
+  min-height: 300px;
+  min-width: 250px; /* 최소 너비 250px 보장 */
+  max-width: 750px; /* 너비를 1.5배로 확장 (500px * 1.5 = 750px) */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+  cursor: default;
+  overflow: hidden; /* 콘텐츠가 박스를 벗어나지 않도록 */
+}
+
+.memo-sticky-note.pinned {
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.memo-sticky-note:hover {
+  border-color: var(--accent-color);
+}
+
+.memo-sticky-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.memo-date-small {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.memo-sticky-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.memo-edit-btn-small,
+.memo-delete-btn-small,
+.memo-save-btn-small,
+.memo-cancel-btn-small,
+.memo-pin-btn-small {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-radius: 3px;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memo-pin-btn-small.pinned {
+  color: var(--accent-color);
+}
+
+.memo-pin-btn-small:hover {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--accent-color);
+}
+
+.memo-edit-btn-small:hover,
+.memo-save-btn-small:hover {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.memo-delete-btn-small:hover,
+.memo-cancel-btn-small:hover {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.memo-sticky-content {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+  max-height: calc(300px - 80px); /* 전체 높이에서 헤더, 패딩, 여백 제외 */
+}
+
+.memo-sticky-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: vertical;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+}
+
+.memo-sticky-textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: var(--bg-primary);
+}
+
+/* 반응형 그리드 */
+@media (max-width: 768px) {
+  .memo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px; /* 작은 화면에서도 여백 확보 */
+  }
+  
+  .memo-sticky-note {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .memo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px; /* 큰 화면에서도 여백 확보 */
+  }
+}
+
+.memo-item {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.memo-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.memo-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.memo-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.memo-edit-btn,
+.memo-delete-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.memo-edit-btn {
+  background: var(--accent-color);
+  color: var(--accent-color-text, var(--button-text-color));
+}
+
+.memo-edit-btn:hover {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.memo-delete-btn {
+  background: var(--color-danger);
+  color: white;
+}
+
+.memo-delete-btn:hover {
+  background: #c82333;
+}
+
+.memo-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+  overflow: hidden; /* 콘텐츠가 박스를 벗어나지 않도록 */
+}
+
+.memo-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.memo-save-btn,
+.memo-cancel-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.memo-save-btn {
+  background: var(--sub-color);
+  color: var(--text-primary);
+}
+
+.memo-save-btn:hover {
+  background: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.memo-cancel-btn {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.memo-cancel-btn:hover {
+  background: var(--hover-bg);
+}
+
+.no-memos {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.memo-tab-icons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.mode-icon {
+  background: none;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-icon:hover {
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.mode-icon.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.mood-tracker-section {
+  margin-bottom: 20px;
+}
+
+.mood-tracker-toggle-btn {
+  transition: all 0.2s;
+}
+
+/* 삭제 확인 모달 스타일 (EventTab와 통일) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.delete-confirm-modal {
+  max-width: 400px;
+}
+
+.delete-confirm-modal p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+
+.modal-cancel,
+.modal-confirm {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-cancel:hover {
+  background: var(--hover-bg);
+}
+
+.modal-confirm {
+  background: var(--color-danger);
+  color: white;
+}
+
+.modal-confirm:hover {
+  background: var(--color-danger);
+  opacity: 0.9;
+}
+
+.modal-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mood-tracker-toggle-btn:hover {
+  opacity: 0.9;
+}
+
+.mood-picker-inline {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}

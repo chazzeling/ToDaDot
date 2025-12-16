@@ -1,0 +1,86 @@
+.nickname-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nickname-editor-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nickname-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  user-select: none;
+}
+
+.nickname-editor-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nickname-input {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--color-surface);
+  outline: none;
+  min-width: 80px;
+  max-width: 150px;
+  transition: border-color 0.2s;
+}
+
+.nickname-input:focus {
+  border-color: var(--accent-color);
+}
+
+.nickname-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nickname-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.nickname-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.nickname-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nickname-btn.edit {
+  opacity: 0.6;
+}
+
+.nickname-btn.edit:hover {
+  opacity: 1;
+}
+
+.nickname-btn.save {
+  color: var(--accent-color);
+}
+
+.nickname-btn.cancel {
+  color: var(--text-secondary);
+}
+

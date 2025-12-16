@@ -1,0 +1,119 @@
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirm-dialog {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-dialog-content {
+  margin-bottom: 24px;
+}
+
+.confirm-dialog-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0 0 12px 0;
+}
+
+.confirm-dialog-message {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+  word-break: keep-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-dialog-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  width: auto;
+}
+
+.confirm-dialog-btn.cancel-btn {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.confirm-dialog-btn.cancel-btn:hover {
+  background: var(--border);
+}
+
+.confirm-dialog-btn.confirm-btn {
+  background: var(--sub-color, var(--accent-color));
+  color: var(--sub-color-text, var(--button-text-color, white));
+  flex: 0 0 auto;
+}
+
+.confirm-dialog-btn.confirm-btn:hover {
+  opacity: 0.85;
+}
+
+.confirm-dialog-btn.confirm-btn.error {
+  background: var(--color-danger, #e68d95);
+  color: white;
+}
+
+.confirm-dialog-btn.confirm-btn.success {
+  background: var(--sub-color, var(--accent-color));
+  color: var(--sub-color-text, var(--button-text-color, white));
+}
+
+.confirm-dialog-btn:active {
+  transform: scale(0.98);
+}

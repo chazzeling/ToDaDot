@@ -1,0 +1,264 @@
+.floating-toolbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: all;
+}
+
+.toolbar-content {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-button,
+.save-complete-button,
+.cancel-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.tool-button:hover,
+.save-complete-button:hover,
+.cancel-button:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.save-complete-button {
+  background: #000;
+  color: white;
+  border-color: #000;
+}
+
+.save-complete-button:hover {
+  background: #333;
+  border-color: #333;
+}
+
+.cancel-button {
+  background: var(--bg-secondary);
+}
+
+.upload-panel {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  max-height: 500px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  overflow-y: auto;
+}
+
+.upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.upload-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.upload-button:hover {
+  background: var(--bg-hover);
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+}
+
+.sticker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sticker-preview {
+  width: 80px;
+  height: 80px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.sticker-preview:hover {
+  transform: scale(1.05);
+}
+
+.sticker-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.sticker-name {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-button:hover {
+  color: var(--accent-color);
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state span {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.save-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100; /* 팝업 최상위 레이어 */
+}
+
+.save-dialog-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+}
+
+.save-dialog-content h4 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-actions .cancel-button,
+.dialog-actions .confirm-button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dialog-actions .confirm-button {
+  background: #000;
+  color: white;
+  border-color: #000;
+}
+
+.dialog-actions .confirm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialog-actions .confirm-button:hover:not(:disabled) {
+  background: #333;
+  border-color: #333;
+}
+

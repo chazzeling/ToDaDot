@@ -1,0 +1,204 @@
+.time-picker {
+  width: 100%;
+}
+
+.time-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* form-group 안에 있을 때는 margin-bottom 제거 */
+.form-group .time-picker-header {
+  margin-bottom: 12px;
+}
+
+.time-picker-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.time-picker-toggle label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.time-picker-toggle-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.time-picker-clear {
+  background: var(--sub-color);
+  color: var(--sub-color-text);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-picker-clear:hover {
+  opacity: 0.8;
+}
+
+.time-picker-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.time-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-picker-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.time-picker-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-picker-button {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--main-color);
+  color: var(--main-color-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.time-picker-button:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.time-picker-button.selected {
+  background: var(--sub-color);
+  color: var(--sub-color-text);
+  border-color: var(--sub-color);
+}
+
+/* 팝업 모드 버튼 스타일 */
+.time-picker-popup-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.time-picker-popup-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-picker-popup-button:hover {
+  border-color: var(--accent-color);
+  background: var(--bg-primary);
+}
+
+.time-picker-popup-button .time-picker-toggle-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.time-picker-clear-separate {
+  padding: 8px 12px;
+  background: var(--sub-color);
+  color: var(--sub-color-text);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.time-picker-clear-separate:hover {
+  opacity: 0.8;
+}
+
+/* 팝업 오버레이 */
+.time-picker-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.time-picker-popup {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  animation: slideUp 0.2s ease-out;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+

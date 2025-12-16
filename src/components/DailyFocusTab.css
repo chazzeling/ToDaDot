@@ -1,0 +1,226 @@
+.daily-focus-tab {
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+}
+
+.daily-focus-tab .tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.daily-focus-tab .tab-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.daily-focus-tab .tab-title-container h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.focus-count {
+  padding: 4px 12px;
+  background: var(--surface);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.reset-focus-btn {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-focus-btn:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.reset-focus-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.daily-focus-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.focus-list-main {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.empty-focus-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-focus-message p {
+  margin: 16px 0 8px 0;
+  font-size: 16px;
+}
+
+.empty-focus-message .hint {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.focus-todos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.focus-todo-item .todo-checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.focus-todo-item:hover {
+  background: var(--background);
+  border-color: var(--primary);
+}
+
+.focus-todo-item.dragging {
+  opacity: 0.5;
+}
+
+.focus-todo-item.drop-target {
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(66, 133, 244, 0.1));
+}
+
+.focus-todo-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.focus-todo-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.focus-todo-text.completed {
+  opacity: 0.6;
+}
+
+.focus-todo-tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.focus-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.focus-tag-quadrant {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.focus-tag-category {
+  /* 배경색, 글씨색, 테두리는 inline style로 카테고리 색상이 적용되도록 함 */
+}
+
+.focus-todo-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.focus-todo-time-inline,
+.focus-todo-memo-inline {
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.focus-todo-time-inline {
+  font-weight: 500;
+}
+
+.focus-todo-memo-inline {
+  font-style: italic;
+}
+
+.focus-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.focus-remove-btn:hover {
+  background: var(--border);
+  transform: scale(1.1);
+}
+
+.focus-icon-active {
+  animation: none;
+}
+
+/* 드래그 앤 드롭 시 시각적 피드백 */
+.focus-todos-list:has(.dragging) .focus-todo-item:not(.dragging) {
+  transition: transform 0.2s ease;
+}

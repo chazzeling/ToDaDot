@@ -1,0 +1,426 @@
+.themeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.themeListVertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.themeGridTwoColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.themeCard {
+  position: relative;
+  background: var(--background-color);
+  border: 2px solid var(--line-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.themeCardVertical {
+  position: relative;
+  background: var(--background-color);
+  border: 2px solid var(--line-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.themeCardGrid {
+  position: relative;
+  background: var(--background-color);
+  border: 2px solid var(--line-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.themeCard:hover,
+.themeCardVertical:hover,
+.themeCardGrid:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.themeCard.selected,
+.themeCardVertical.selected,
+.themeCardGrid.selected {
+  border-color: var(--accent-color);
+  background: var(--main-color);
+}
+
+.colorPreview {
+  display: flex;
+  gap: 2px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.colorPreviewVertical {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.colorPreviewGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+}
+
+.pawPrintRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pawPrint {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.pawPrint:hover {
+  transform: scale(1.2);
+}
+
+.colorBar {
+  flex: 1;
+}
+
+.themeName {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  flex: 1;
+  margin-top: 0.25rem;
+}
+
+.themeActions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.themeCard:hover .themeActions,
+.themeCardVertical:hover .themeActions,
+.themeCardGrid:hover .themeActions {
+  opacity: 1;
+}
+
+.editTheme,
+.deleteTheme {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.editTheme:hover {
+  background: var(--main-color);
+  transform: scale(1.1);
+  color: var(--accent-color);
+}
+
+.deleteTheme:hover {
+  background: #FFE4E1;
+  color: #FF6B6B;
+  transform: scale(1.1);
+}
+
+.createButton {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 2px dashed var(--accent-color);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--accent-color);
+  transition: all 0.2s;
+}
+
+.createButton:hover {
+  background: var(--main-color);
+  border-style: solid;
+}
+
+.customForm {
+  background: var(--background-color);
+  padding: 1.5rem;
+  border-radius: 8px;
+  position: relative;
+  overflow: visible;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.formTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--line-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: var(--main-color);
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.previewToggle {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--main-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.previewLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.previewLabel input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.previewHint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-left: 32px;
+}
+
+.colorInputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.colorInput {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.colorInput label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.colorControl {
+  display: flex;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.colorButton {
+  width: 40px;
+  height: 32px;
+  border: 2px solid var(--line-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.colorButton:hover {
+  border-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.colorButton:active {
+  transform: scale(0.95);
+}
+
+.colorText {
+  flex: 1;
+  padding: 0.25rem;
+  border: 1px solid var(--line-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--main-color);
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.colorText:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.colorPickerPopover {
+  position: fixed;
+  z-index: 1100; /* 팝업 최상위 레이어 */
+}
+
+.colorPickerCover {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* React Colorful 커스텀 스타일 */
+.colorInput :global(.react-colorful) {
+  width: 200px !important;
+  height: 200px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  border: 2px solid var(--line-color) !important;
+  background: var(--main-color) !important;
+}
+
+.colorInput :global(.react-colorful__saturation) {
+  border-radius: 4px !important;
+}
+
+.colorInput :global(.react-colorful__hue) {
+  margin-top: 12px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+}
+
+.colorInput :global(.react-colorful__pointer) {
+  width: 20px !important;
+  height: 20px !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background: var(--main-color);
+  color: var(--text-secondary);
+  border: 1px solid var(--line-color);
+}
+
+.cancelButton:hover {
+  background: var(--background-color);
+}
+
+.saveButton {
+  background: var(--sub-color);
+  color: var(--text-primary);
+}
+
+.saveButton:hover {
+  background: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

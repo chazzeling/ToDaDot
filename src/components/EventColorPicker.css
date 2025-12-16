@@ -1,0 +1,55 @@
+.event-color-picker {
+  margin-bottom: 20px;
+}
+
+.color-picker-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.color-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.color-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-group-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.color-chip-row {
+  display: flex;
+  gap: 8px;
+}
+
+.color-chip {
+  width: 32px;
+  height: 32px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.color-chip:hover {
+  transform: scale(1.1);
+}
+
+.color-chip.selected {
+  border-color: var(--accent-color);
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+

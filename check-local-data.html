@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로컬 데이터 확인</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .data-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .data-item {
+            margin: 10px 0;
+        }
+        .has-data {
+            color: green;
+            font-weight: bold;
+        }
+        .no-data {
+            color: red;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>로컬 데이터 확인 도구</h1>
+    
+    <div class="data-section">
+        <h2>로컬 스토리지 데이터</h2>
+        <div id="localStorageData"></div>
+    </div>
+    
+    <div class="data-section">
+        <h2>마이그레이션 상태</h2>
+        <div id="migrationStatus"></div>
+    </div>
+    
+    <div class="data-section">
+        <h2>작업</h2>
+        <button onclick="checkData()">데이터 다시 확인</button>
+        <button onclick="resetMigrationFlags()">마이그레이션 플래그 초기화</button>
+        <button onclick="exportData()">데이터 내보내기 (JSON)</button>
+    </div>
+    
+    <div class="data-section">
+        <h2>데이터 상세 정보</h2>
+        <div id="detailedData"></div>
+    </div>
+
+    <script>
+        function checkData() {
+            const keys = [
+                'eisenhower-todos',
+                'memos',
+                'diaries',
+                'diary-entries',
+                'firebase-todos-sync-completed',
+                'firebase-diaries-memos-sync-completed'
+            ];
+            
+            let html = '';
+            let totalCount = 0;
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const hasData = value !== null && value !== '';
+                
+                if (key.includes('sync-completed')) {
+                    html += `<div class="data-item">
+                        <strong>${key}:</strong> 
+                        <span class="${hasData ? 'has-data' : 'no-data'}">
+                            ${hasData ? value : '없음'}
+                        </span>
+                    </div>`;
+                } else {
+                    let count = 0;
+                    let parsed = null;
+                    
+                    if (hasData) {
+                        try {
+                            parsed = JSON.parse(value);
+                            if (Array.isArray(parsed)) {
+                                count = parsed.length;
+                            } else if (typeof parsed === 'object') {
+                                count = Object.keys(parsed).length;
+                            }
+                        } catch (e) {
+                            count = -1; // 파싱 실패
+                        }
+                    }
+                    
+                    totalCount += count > 0 ? count : 0;
+                    
+                    html += `<div class="data-item">
+                        <strong>${key}:</strong> 
+                        <span class="${hasData ? 'has-data' : 'no-data'}">
+                            ${hasData ? `있음 (${count > 0 ? count + '개' : '파싱 실패'})` : '없음'}
+                        </span>
+                    </div>`;
+                }
+            });
+            
+            document.getElementById('localStorageData').innerHTML = html;
+            
+            // 마이그레이션 상태
+            const todosSync = localStorage.getItem('firebase-todos-sync-completed');
+            const diariesMemosSync = localStorage.getItem('firebase-diaries-memos-sync-completed');
+            
+            let migrationHtml = `
+                <div class="data-item">
+                    <strong>투두 마이그레이션:</strong> 
+                    <span class="${todosSync === 'true' ? 'has-data' : 'no-data'}">
+                        ${todosSync === 'true' ? '완료됨' : '미완료'}
+                    </span>
+                </div>
+                <div class="data-item">
+                    <strong>일기/메모 마이그레이션:</strong> 
+                    <span class="${diariesMemosSync === 'true' ? 'has-data' : 'no-data'}">
+                        ${diariesMemosSync === 'true' ? '완료됨' : '미완료'}
+                    </span>
+                </div>
+                <div class="data-item">
+                    <strong>총 로컬 데이터 개수:</strong> 
+                    <span class="${totalCount > 0 ? 'has-data' : 'no-data'}">
+                        ${totalCount}개
+                    </span>
+                </div>
+            `;
+            
+            document.getElementById('migrationStatus').innerHTML = migrationHtml;
+            
+            // 상세 정보
+            let detailedHtml = '<h3>데이터 상세:</h3>';
+            keys.forEach(key => {
+                if (key.includes('sync-completed')) return;
+                
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        const parsed = JSON.parse(value);
+                        detailedHtml += `<h4>${key}:</h4>`;
+                        detailedHtml += `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+                    } catch (e) {
+                        detailedHtml += `<h4>${key}:</h4>`;
+                        detailedHtml += `<pre>파싱 실패: ${e.message}</pre>`;
+                    }
+                }
+            });
+            
+            document.getElementById('detailedData').innerHTML = detailedHtml;
+        }
+        
+        function resetMigrationFlags() {
+            if (confirm('마이그레이션 플래그를 초기화하시겠습니까? 이렇게 하면 다음 로그인 시 팝업이 다시 표시됩니다.')) {
+                localStorage.removeItem('firebase-todos-sync-completed');
+                localStorage.removeItem('firebase-diaries-memos-sync-completed');
+                alert('마이그레이션 플래그가 초기화되었습니다. 페이지를 새로고침하고 다시 로그인해보세요.');
+                checkData();
+            }
+        }
+        
+        function exportData() {
+            const data = {
+                todos: localStorage.getItem('eisenhower-todos'),
+                memos: localStorage.getItem('memos'),
+                diaries: localStorage.getItem('diaries'),
+                diaryEntries: localStorage.getItem('diary-entries'),
+                migrationFlags: {
+                    todos: localStorage.getItem('firebase-todos-sync-completed'),
+                    diariesMemos: localStorage.getItem('firebase-diaries-memos-sync-completed')
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `todadot-local-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // 페이지 로드 시 자동 확인
+        checkData();
+    </script>
+</body>
+</html>
+

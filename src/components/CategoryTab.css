@@ -1,0 +1,1018 @@
+.category-tab {
+  padding: 20px 20px 20px 20px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 스크롤바 스타일 - 마우스 호버 시에만 표시 */
+.category-tab::-webkit-scrollbar {
+  width: 12px;
+}
+
+.category-tab::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.category-tab::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 20px;
+}
+
+.category-tab:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
+}
+
+.category-tab::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+  background-clip: padding-box;
+}
+
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tab-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.help-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.help-icon {
+  cursor: help;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.help-icon:hover {
+  opacity: 1;
+}
+
+.help-icon-wrapper .tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: normal;
+  width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.help-icon-wrapper:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.help-icon-wrapper .tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--bg-secondary);
+}
+
+.help-icon-wrapper .tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom-color: var(--border-color);
+  margin-bottom: -1px;
+}
+
+.tab-header > div {
+  display: flex;
+  gap: 10px;
+}
+
+.manage-category-btn,
+.create-category-btn,
+.manage-todo-btn {
+  background: var(--sub-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+
+.manage-category-btn:hover,
+.create-category-btn:hover,
+.manage-todo-btn:hover {
+  background: var(--accent-color);
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.category-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-surface);
+  min-height: 60px;
+  transition: border 0.2s, background 0.2s;
+}
+
+.category-box.dropping-target {
+  border: 2px dashed var(--accent-color, #4285f4);
+  background: color-mix(in srgb, var(--accent-color, #4285f4) 10%, var(--color-surface));
+}
+
+.category-box:has(.todos-list:empty) {
+  min-height: 60px;
+}
+
+.category-title {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.category-add-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  font-weight: 300;
+}
+
+.category-add-btn:hover {
+  opacity: 0.6;
+}
+
+.todo-input-container-expanded {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--color-surface);
+}
+
+.todos-list {
+  flex: 1;
+  overflow-y: visible;
+  padding: 8px;
+  min-height: 100px;
+}
+
+.todos-list:empty {
+  min-height: 100px;
+  padding: 8px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  margin-bottom: 1px;
+  background: var(--color-surface);
+  border-radius: 4px;
+  cursor: move;
+  transition: background 0.2s, border 0.2s;
+  overflow: visible !important; /* 메뉴가 잘리지 않도록 */
+}
+
+.todo-item.dropping-target {
+  background: color-mix(in srgb, var(--accent-color, #4285f4) 20%, transparent);
+  border: 2px dashed var(--accent-color, #4285f4);
+  padding: 2px;
+}
+
+.todo-item:active {
+  opacity: 0.5;
+}
+
+/* 원형 체크박스 */
+.todo-checkbox.acorn-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  background: transparent;
+  border: 2px solid var(--acorn-color, var(--sub-color));
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+/* 체크된 상태: 원형 채우기 + 체크 마크 */
+.todo-checkbox.acorn-checkbox:checked {
+  background: var(--acorn-color, var(--sub-color));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M10 3L4.5 8.5L2 6' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 10px;
+}
+
+.todo-text {
+  flex: 1;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.todo-text.completed {
+  opacity: 0.5;
+  color: var(--text-secondary);
+}
+
+.todo-delete-text {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.todo-delete-text:hover {
+  opacity: 0.6;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--color-surface);
+}
+
+.todo-input:focus {
+  outline: none;
+  border-color: var(--sub-color);
+}
+
+.todo-add-btn {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.todo-add-btn:hover {
+  background: var(--accent-color);
+}
+
+.todo-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.todo-cancel-btn:hover {
+  opacity: 0.6;
+}
+
+.uncategorized-section {
+  margin-top: 20px;
+}
+
+.uncategorized-section .category-box {
+  min-height: 200px;
+}
+
+.uncategorized-section .category-box .todos-list {
+  min-height: 150px;
+}
+
+.uncategorized-section .category-box .todos-list:empty {
+  min-height: 150px;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100; /* 팝업 최상위 레이어 */
+}
+
+.modal-content {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.manage-modal {
+  max-width: 600px;
+}
+
+.manage-actions {
+  margin-bottom: 20px;
+}
+
+.manage-action-btn {
+  background: var(--sub-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.manage-action-btn:hover {
+  background: var(--accent-color);
+}
+
+.categories-list {
+  margin-bottom: 20px;
+}
+
+.manage-category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: move;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.manage-category-item:hover {
+  background: var(--hover-bg);
+}
+
+.manage-category-item.dragging {
+  opacity: 0.5;
+}
+
+.manage-category-item.drop-target {
+  border: 2px dashed var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 10%, var(--color-surface));
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.edit-btn {
+  background: var(--color-background);
+  color: var(--text-primary);
+}
+
+.edit-btn:hover {
+  background: var(--hover-bg);
+}
+
+.delete-btn {
+  background: var(--color-danger);
+  color: var(--button-text-color);
+}
+
+.delete-btn:hover {
+  background: var(--color-danger);
+}
+
+.delete-confirm-modal {
+  max-width: 400px;
+}
+
+.delete-confirm-modal p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 삭제 확인 모달의 삭제 버튼은 danger 색상 사용 */
+.delete-confirm-modal .modal-confirm {
+  background: var(--color-danger);
+  color: white;
+}
+
+.delete-confirm-modal .modal-confirm:hover {
+  background: var(--color-danger);
+  opacity: 0.9;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.modal-input {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--sub-color);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+
+.todo-manage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.todo-manage-btn {
+  background: var(--color-background);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.todo-manage-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--border-color);
+}
+
+.modal-cancel,
+.modal-confirm {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-cancel {
+  background: var(--color-background);
+  color: var(--text-primary);
+}
+
+.modal-cancel:hover {
+  background: var(--hover-bg);
+}
+
+.modal-confirm {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.modal-confirm:hover {
+  background: var(--accent-color);
+}
+
+/* 할 일 옵션 메뉴 */
+.todo-item-wrapper {
+  margin-bottom: 4px;
+  overflow: visible !important; /* 메뉴가 잘리지 않도록 */
+}
+
+.todo-options {
+  position: relative;
+  flex-shrink: 0;
+  overflow: visible !important; /* 메뉴가 잘리지 않도록 */
+}
+
+.focus-marker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.focus-marker-btn:hover {
+  background: var(--surface);
+  transform: scale(1.1);
+}
+
+.focus-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.focus-icon-wrapper.active {
+  animation: rotateIn 0.3s ease;
+}
+
+.focus-icon {
+  transition: color 0.2s ease;
+}
+
+.focus-icon-active {
+  color: var(--primary);
+}
+
+.focus-icon-inactive {
+  color: var(--text-secondary);
+}
+
+@keyframes rotateIn {
+  0% {
+    transform: rotate(-15deg) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(5deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.todo-options-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.todo-options-btn:hover {
+  color: var(--text-primary);
+}
+
+.todo-options-menu {
+  position: fixed;
+  background: var(--color-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100000 !important; /* 매우 높은 z-index로 다른 요소 뒤에 가려지지 않도록 */
+  min-width: 120px;
+  overflow: visible !important;
+}
+
+.todo-options-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.todo-options-menu button:hover {
+  background: #f0f0f0;
+}
+
+.todo-options-menu button:first-child {
+  border-radius: 6px 6px 0 0;
+}
+
+.todo-options-menu button:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+/* 할 일 수정 입력 */
+.todo-edit-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--sub-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--color-surface);
+}
+
+.todo-edit-input:focus {
+  outline: none;
+  border-color: var(--sub-color);
+}
+
+/* 메타 정보 (시간, 메모) */
+.todo-meta {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todo-time-inline,
+.todo-memo-inline {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: pre-wrap; /* 줄바꿈 문자를 그대로 표시 */
+  word-break: break-word;
+  max-width: 150%; /* 메모 너비를 1.5배로 늘림 */
+}
+
+/* 시간 선택기 */
+.time-picker {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--color-background);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.time-selector {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.time-column {
+  flex: 1;
+}
+
+.time-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.time-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.time-option {
+  padding: 6px 12px;
+  background: var(--color-surface);
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.time-option:hover {
+  background: #f0f0f0;
+}
+
+.time-option.selected {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.time-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.time-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.time-actions button:first-child {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.time-actions button:first-child:hover {
+  background: var(--accent-color);
+}
+
+.time-actions button:not(:first-child) {
+  background: var(--color-background);
+  color: var(--text-primary);
+}
+
+.time-actions button:not(:first-child):hover {
+  background: var(--hover-bg);
+}
+
+/* 날짜 선택기 */
+.date-picker {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--color-background);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.date-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--sub-color);
+}
+
+.date-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.date-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.date-actions button:first-child {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.date-actions button:first-child:hover {
+  background: var(--accent-color);
+}
+
+.date-actions button:last-child {
+  background: var(--color-background);
+  color: var(--text-primary);
+}
+
+.date-actions button:last-child:hover {
+  background: var(--hover-bg);
+}
+
+/* 메모 편집기 */
+.memo-editor {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--color-danger-light);
+  border-radius: 6px;
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.memo-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+  resize: vertical;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+
+.memo-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.memo-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.memo-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.memo-actions button:first-child {
+  background: var(--sub-color);
+  color: var(--sub-color-text, var(--button-text-color));
+}
+
+.memo-actions button:first-child:hover {
+  background: var(--accent-color);
+}
+
+.memo-actions button:not(:first-child) {
+  background: var(--color-background);
+  color: var(--text-primary);
+}
+
+.memo-actions button:not(:first-child):hover {
+  background: var(--hover-bg);
+}
+
+/* 메모 표시 */
+.todo-memo {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  padding: 8px;
+  padding-left: 26px;
+  background: var(--color-danger-light);
+  border-radius: 4px;
+  border-left: 3px solid var(--accent-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo-memo span {
+  flex: 1;
+  word-break: break-word;
+}
+
+.memo-buttons {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.memo-edit-btn,
+.memo-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.memo-edit-btn:hover,
+.memo-delete-btn:hover {
+  color: var(--text-primary);
+}

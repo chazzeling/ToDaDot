@@ -1,0 +1,74 @@
+.rich-text-editor {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  overflow-y: auto;
+  word-wrap: break-word;
+  font-family: inherit;
+}
+
+.rich-text-editor:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+.rich-text-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.rich-text-editor h1 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 8px 0 4px 0;
+  line-height: 1.3;
+}
+
+.rich-text-editor h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 6px 0 4px 0;
+  line-height: 1.3;
+}
+
+.rich-text-editor h3 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 4px 0 2px 0;
+  line-height: 1.4;
+}
+
+.rich-text-editor .body-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rich-text-editor small,
+.rich-text-editor .note-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.rich-text-editor strong,
+.rich-text-editor b {
+  font-weight: bold;
+}
+
+.rich-text-editor em,
+.rich-text-editor i {
+  font-style: italic;
+}
+
+.rich-text-editor del,
+.rich-text-editor s {
+  text-decoration: line-through;
+}
+

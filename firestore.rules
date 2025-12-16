@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 사용자 프로필 읽기/쓰기 (인증된 사용자만 자신의 프로필 수정 가능)
+    match /users/{userId}/profile/info {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 투두 읽기/쓰기 (인증된 사용자만 자신의 투두 수정 가능)
+    match /users/{userId}/todos/{todoId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 일기 읽기/쓰기 (인증된 사용자만 자신의 일기 수정 가능)
+    match /users/{userId}/diaries/{diaryId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 메모 읽기/쓰기 (인증된 사용자만 자신의 메모 수정 가능)
+    match /users/{userId}/memos/{memoId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+

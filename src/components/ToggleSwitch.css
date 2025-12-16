@@ -1,0 +1,63 @@
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: 14px;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: #4285f4;
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.toggle-input:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+
+
+
+
+
+
+
+
+

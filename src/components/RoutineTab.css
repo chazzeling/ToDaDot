@@ -1,0 +1,301 @@
+.routine-tab {
+  padding: 20px 20px 20px 20px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 스크롤바 스타일 - 마우스 호버 시에만 표시 */
+.routine-tab::-webkit-scrollbar {
+  width: 12px;
+}
+
+.routine-tab::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.routine-tab::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 20px;
+}
+
+.routine-tab:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
+}
+
+.routine-tab::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+  background-clip: padding-box;
+}
+
+.routine-tab .tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.routine-tab .tab-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tab-title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manage-routine-btn {
+  background: var(--sub-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+
+.manage-routine-btn:hover {
+  background: var(--accent-color);
+}
+
+.routine-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.routine-section {
+  margin-bottom: 0;
+}
+
+.routine-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.routine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 12px;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.routine-item.active {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-primary);
+}
+
+.routine-item.active.completed {
+  opacity: 0.6;
+}
+
+.routine-item.inactive {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.routine-item.inactive:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.routine-item input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  background: transparent;
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.routine-item input[type="checkbox"]:checked {
+  background: var(--accent-color);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M10 3L4.5 8.5L2 6' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+.routine-text {
+  flex: 1;
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.routine-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.routine-item.active:hover .routine-delete-btn {
+  opacity: 1;
+}
+
+.routine-delete-btn:hover {
+  background: var(--main-color);
+  color: var(--danger);
+}
+
+.routine-manage-modal {
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.add-routine-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.routine-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: var(--surface);
+}
+
+.routine-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.add-routine-btn {
+  padding: 0.5rem 1rem;
+  background: var(--sub-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.add-routine-btn:hover {
+  background: var(--accent-color);
+}
+
+.routine-manage-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.routine-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface);
+  gap: 0.75rem;
+}
+
+.routine-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.routine-edit-form input {
+  flex: 1;
+}
+
+.routine-edit-form button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.routine-edit-form button:hover {
+  background: var(--main-color);
+}
+
+.routine-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.routine-actions button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.routine-actions .edit-btn:hover {
+  background: var(--main-color);
+  color: var(--accent-color);
+}
+
+.routine-actions .delete-btn:hover {
+  background: #FFE4E1;
+  color: #FF6B6B;
+  border-color: #FF6B6B;
+}
+

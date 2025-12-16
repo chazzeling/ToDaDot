@@ -1,0 +1,455 @@
+.time-planner-wrapper {
+  position: relative;
+  padding: 15px;
+  padding-left: 11.25px;
+  padding-right: 11.25px;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+.time-planner-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-layout.daily-focus-mode .time-planner-wrapper {
+  margin-top: 52px;
+  height: calc(100% - 52px);
+  padding-left: 5.625px;
+  padding-right: 5.625px;
+}
+
+.time-planner-header {
+  margin-bottom: 16px;
+}
+
+.time-planner-header-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.time-planner-panel.collapsed {
+  padding: 10px 5px;
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.time-planner-panel.collapsed .collapse-toggle {
+  justify-content: center;
+  padding: 4px;
+}
+
+.time-planner-panel.collapsed .collapse-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.collapse-toggle {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.collapse-toggle h3 {
+  margin: 0;
+  text-align: left;
+  flex: 1;
+}
+
+.collapse-toggle:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.collapse-toggle-inline {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.collapse-toggle-inline:hover {
+  color: var(--text-primary);
+}
+
+.time-planner-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.time-planner-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-planner-reset-btn:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.time-planner-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.time-planner-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.time-planner-categories {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.category-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.category-selector-wrapper {
+  position: relative;
+}
+
+.category-selector {
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  min-width: 0;
+}
+
+.category-selector:hover {
+  background: var(--bg-primary);
+}
+
+.category-selector.selected {
+  background: transparent;
+}
+
+.category-color-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.category-name-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  flex: 1;
+  min-width: 0;
+}
+
+.category-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-name-input {
+  padding: 4px 6px;
+  border: 2px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+  width: 80px;
+  max-width: 80px;
+}
+
+.time-planner-grid-wrapper {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+.time-labels-container {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+}
+
+.time-label-row {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.time-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding-right: 6px;
+  width: 24px;
+  text-align: right;
+}
+
+.time-grid-container {
+  display: grid;
+  grid-template-rows: repeat(24, 16px);
+  gap: 0 !important;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  height: calc(24 * 16px + 2px); /* 24행 * 16px + 테두리 2px */
+}
+
+.time-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0 !important;
+  margin: 0;
+  padding: 0;
+  height: 16px;
+}
+
+.time-cell {
+  border: 0;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.1s;
+  margin: 0;
+  padding: 0;
+  height: 16px;
+  /* 색상이 없는 셀에 점선 표시 (세로선과 가로선) */
+  border-right: 1px dotted rgba(0, 0, 0, 0.1);
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+}
+
+.time-cell:last-child {
+  border-right: none;
+}
+
+/* 마지막 열의 오른쪽 테두리 제거 (외곽 컨테이너 border 사용) */
+.time-row .time-cell:last-child {
+  border-right: none;
+}
+
+/* 마지막 행의 아래 테두리 제거 (외곽 컨테이너 border 사용) */
+.time-grid-container .time-row:last-child .time-cell {
+  border-bottom: none;
+}
+
+.time-grid-container .time-row:last-child .time-cell::after {
+  border-bottom: none;
+}
+
+.time-cell:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.time-cell.has-block {
+  cursor: pointer;
+  position: relative;
+  z-index: 0;
+  /* 점선은 유지하되 색상 위에 표시되도록 */
+  border-right: 1px dotted rgba(0, 0, 0, 0.1);
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+  /* 점선을 위에 표시하기 위한 pseudo-element */
+}
+
+.time-cell.has-block::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-right: 1px dotted rgba(0, 0, 0, 0.1);
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 블록의 시작 셀 - 왼쪽과 위쪽 실선 테두리 */
+.time-cell.has-block.block-start {
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+}
+
+/* 블록의 끝 셀 - 오른쪽과 아래쪽 실선 테두리 */
+.time-cell.has-block.block-end {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* 블록이 시작이면서 끝인 경우 (단일 셀 블록) */
+.time-cell.has-block.block-start.block-end {
+  border: none;
+}
+
+/* 블록 내부 셀들 (시작도 끝도 아닌 경우) - 모든 테두리 제거 */
+.time-cell.has-block:not(.block-start):not(.block-end) {
+  border: none;
+}
+
+
+.block-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 2px;
+  z-index: 10;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.block-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.block-label-input {
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--accent-color);
+  border-radius: 3px;
+  padding: 1px 2px;
+  font-size: 9px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.block-delete-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.block-content:hover .block-delete-btn {
+  opacity: 1;
+}
+
+.block-delete-btn:hover {
+  background: rgba(244, 67, 54, 0.8);
+}
+
+/* 스크롤바 스타일 */
+.time-planner-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.time-planner-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.time-planner-grid::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.time-planner-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.time-planner-categories::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.time-planner-categories::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.time-planner-categories::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}

@@ -1,0 +1,65 @@
+Windows → macOS 데이터 복사 간단 가이드
+========================================
+
+📌 복사해야 할 파일 위치
+
+Windows:
+  C:\Users\[사용자명]\AppData\Roaming\ToDaDot
+
+빠른 접근:
+  1. Win + R 키 누르기
+  2. %APPDATA%\ToDaDot 입력 후 Enter
+
+macOS:
+  ~/Library/Application Support/ToDaDot
+
+빠른 접근:
+  1. Finder에서 Cmd + Shift + G
+  2. ~/Library/Application Support/ToDaDot 입력
+
+========================================
+필수 파일 (할일 목록 포함)
+========================================
+
+1. todadat.db 파일 (또는 todadot.db)
+   → 할일 메모, 헤더 이미지, 스티커 데이터
+   ⚠️ 파일명이 todadat.db일 수 있습니다 (이전 버전)
+
+2. Local Storage 폴더 (전체)
+   → 할일 목록, 카테고리, 일정, 일기 등 모든 데이터
+   → 이 폴더 안에 leveldb 폴더가 있습니다
+
+3. images 폴더 (있는 경우)
+   → 스티커 이미지들
+
+========================================
+복사 방법
+========================================
+
+1. Windows에서 ToDaDot 앱 완전 종료
+
+2. Windows 탐색기에서:
+   - Win + R → %APPDATA%\ToDaDot 입력
+   - todadat.db 파일 복사 (또는 todadot.db)
+   - Local Storage 폴더 전체 복사
+   - images 폴더 복사 (있는 경우)
+
+3. USB나 클라우드에 복사
+
+4. macOS에서:
+   - ToDaDot 앱 한 번 실행 (폴더 생성용)
+   - 앱 종료
+   - Finder에서 Cmd + Shift + G
+   - ~/Library/Application Support/ToDaDot 입력
+   - Windows에서 복사한 파일들 붙여넣기
+
+5. macOS에서 ToDaDot 앱 재시작
+
+========================================
+주의사항
+========================================
+
+⚠️ 앱 실행 중에는 복사하지 마세요!
+⚠️ Local Storage 폴더는 숨김 폴더일 수 있습니다
+⚠️ macOS에 이미 데이터가 있으면 덮어쓰기 선택
+
