@@ -11,6 +11,7 @@
   height: 100%;
   overflow: hidden;
   width: 100%;
+  min-width: 0;
 }
 
 .time-planner-panel {
@@ -146,6 +147,8 @@
   margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  min-width: 0;
 }
 
 .category-row {
@@ -227,8 +230,9 @@
   grid-template-columns: auto 1fr;
   gap: 8px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   user-select: none;
+  min-width: 0;
 }
 
 .time-labels-container {
@@ -280,7 +284,7 @@
   margin: 0;
   padding: 0;
   height: 16px;
-  /* 색상이 없는 셀에 점선 표시 (세로선과 가로선) */
+  min-width: 0;
   border-right: 1px dotted rgba(0, 0, 0, 0.1);
   border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
 }
@@ -475,4 +479,74 @@
 .time-planner-categories::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 768px) {
+  .time-record-wrapper {
+    padding: 8px;
+    padding-top: 0;
+    height: auto;
+    overflow: visible;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .time-planner-panel {
+    padding: 8px;
+    height: auto;
+    overflow: visible;
+    flex: none;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .time-planner-grid-wrapper {
+    overflow: visible;
+    flex: none;
+    height: auto;
+    min-height: auto;
+    width: 100%;
+    display: block;
+  }
+
+  .time-labels-container {
+    display: none; /* 모바일에서 시간 라벨 숨김 (공간 절약) */
+  }
+
+  .time-grid-container {
+    min-width: 100%;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    height: auto;
+    min-height: calc(24 * 16px + 2px);
+  }
+
+  .time-row {
+    grid-template-columns: repeat(6, 1fr);
+    width: 100%;
+  }
+
+  .time-planner-categories {
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .category-row {
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .time-grid-container {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .time-planner-categories {
+    gap: 6px;
+  }
 }

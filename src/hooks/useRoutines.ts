@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useFirebaseAuth } from './useFirebaseAuth';
+import * as routineService from '../firebase/routineService';
 
 const STORAGE_KEY = 'routines';
 
@@ -10,28 +12,88 @@ export interface Routine {
 }
 
 export function useRoutines() {
-  const [routines, setRoutines] = useState<Routine[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
+  const { user, isAuthenticated } = useFirebaseAuth();
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const isInitialLoadRef = useRef(true);
+  const hasSyncedRef = useRef(false);
+
+  // 로컬 스토리지와 Firebase에서 불러오기
+  useEffect(() => {
+    const loadData = async () => {
+      // 1. localStorage에서 불러오기
+      let localRoutines: Routine[] = [];
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          localRoutines = JSON.parse(saved);
+        }
+      } catch (error) {
+        console.error('Failed to load routines from localStorage:', error);
       }
-    } catch (error) {
-      console.error('Failed to load routines from localStorage:', error);
-    }
-    return [];
-  });
+
+      // 2. Firebase에서 불러오기 (인증된 경우)
+      if (isAuthenticated && user && !hasSyncedRef.current) {
+        try {
+          const firebaseRoutines = await routineService.getAllRoutines();
+          
+          if (firebaseRoutines.length > 0) {
+            // Firebase 데이터와 로컬 데이터 병합 (로컬 데이터 우선)
+            const mergedRoutines = mergeRoutines(localRoutines, firebaseRoutines);
+            setRoutines(mergedRoutines);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRoutines));
+          } else if (localRoutines.length > 0) {
+            // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
+            setRoutines(localRoutines);
+            await routineService.saveRoutinesBatch(localRoutines);
+          } else {
+            setRoutines(localRoutines);
+          }
+          
+          hasSyncedRef.current = true;
+        } catch (error) {
+          console.error('Failed to load routines from Firebase:', error);
+          setRoutines(localRoutines);
+        }
+      } else {
+        setRoutines(localRoutines);
+      }
+      
+      isInitialLoadRef.current = false;
+    };
+    
+    loadData();
+  }, [isAuthenticated, user]);
+
+  // 병합 함수: 로컬 데이터 우선
+  const mergeRoutines = (local: Routine[], firebase: Routine[]): Routine[] => {
+    const mergedMap = new Map<string, Routine>();
+    
+    // Firebase 데이터 먼저 추가
+    firebase.forEach(routine => mergedMap.set(routine.id, routine));
+    
+    // 로컬 데이터로 덮어쓰기 (같은 ID가 있으면 로컬 데이터 우선)
+    local.forEach(routine => mergedMap.set(routine.id, routine));
+    
+    const merged = Array.from(mergedMap.values());
+    merged.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    return merged;
+  };
 
   // 루틴 저장
   const saveRoutines = useCallback(async (updatedRoutines: Routine[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRoutines));
       setRoutines(updatedRoutines);
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isAuthenticated && user) {
+        await routineService.saveRoutinesBatch(updatedRoutines);
+      }
     } catch (error) {
-      console.error('Failed to save routines to localStorage:', error);
+      console.error('Failed to save routines:', error);
       throw error;
     }
-  }, []);
+  }, [isAuthenticated, user]);
 
   // 루틴 추가
   const addRoutine = useCallback(async (text: string) => {
@@ -76,9 +138,16 @@ export function useRoutines() {
     const updatedRoutines = routines.filter((routine) => routine.id !== id);
     await saveRoutines(updatedRoutines);
     
+    // Firebase에서도 삭제 (인증된 경우)
+    if (isAuthenticated && user) {
+      routineService.deleteRoutine(id).catch(error => {
+        console.error('Failed to delete routine from Firebase:', error);
+      });
+    }
+    
     // 🔒 검증: 이 함수가 인스턴스 삭제를 수행하지 않았음을 확인
     // (향후 실수로 추가된 코드를 방지하기 위한 문서화)
-  }, [routines, saveRoutines]);
+  }, [routines, saveRoutines, isAuthenticated, user]);
 
   // 루틴 순서 변경
   const reorderRoutines = useCallback(async (draggedId: string, targetId: string) => {

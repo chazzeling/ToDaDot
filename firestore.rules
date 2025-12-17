@@ -21,6 +21,56 @@ service cloud.firestore {
     match /users/{userId}/memos/{memoId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    
+    // 카테고리 읽기/쓰기 (인증된 사용자만 자신의 카테고리 수정 가능)
+    match /users/{userId}/categories/{categoryId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 이벤트 읽기/쓰기 (인증된 사용자만 자신의 이벤트 수정 가능)
+    match /users/{userId}/events/{eventId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 이벤트 카테고리 읽기/쓰기 (인증된 사용자만 자신의 이벤트 카테고리 수정 가능)
+    match /users/{userId}/event-categories/{categoryId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 루틴 읽기/쓰기 (인증된 사용자만 자신의 루틴 수정 가능)
+    match /users/{userId}/routines/{routineId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 무드 읽기/쓰기 (인증된 사용자만 자신의 무드 수정 가능)
+    match /users/{userId}/moods/{moodId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 설정 읽기/쓰기 (인증된 사용자만 자신의 설정 수정 가능)
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 시간 계획 데이터 읽기/쓰기 (인증된 사용자만 자신의 시간 계획 수정 가능)
+    match /users/{userId}/time-planner-data/{date} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 시간 계획 카테고리 읽기/쓰기 (인증된 사용자만 자신의 시간 계획 카테고리 수정 가능)
+    match /users/{userId}/time-planner-categories/{categoryId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 시간 기록 데이터 읽기/쓰기 (인증된 사용자만 자신의 시간 기록 수정 가능)
+    match /users/{userId}/time-record-data/{date} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 시간 기록 카테고리 읽기/쓰기 (인증된 사용자만 자신의 시간 기록 카테고리 수정 가능)
+    match /users/{userId}/time-record-categories/{categoryId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }
 

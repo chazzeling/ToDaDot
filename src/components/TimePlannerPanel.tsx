@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { TimeBlock, TimePlannerCategory, TimePlannerData, DateString } from '../types';
 import { RotateCcw, ChevronLeft, PanelRightOpen } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth';
+import * as timePlannerService from '../firebase/timePlannerService';
 import './TimePlannerPanel.css';
 
 // 기본 카테고리 색상
@@ -31,8 +33,9 @@ interface TimePlannerPanelProps {
 }
 
 export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = false, onToggleCollapse }: TimePlannerPanelProps) {
-  // 💾 핵심: 모든 데이터는 localStorage에서만 관리되며, 컴포넌트 상태는 단순히 표시용입니다
+  // 💾 핵심: 모든 데이터는 localStorage와 Firebase 모두에 저장됩니다
   // 🚦 로딩 상태 추가: 데이터 로딩이 완료될 때까지 빈 화면 방지
+  const { user, isAuthenticated } = useFirebaseAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [blocks, setBlocks] = useState<TimeBlock[]>([]);
@@ -103,9 +106,9 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
     previousDateRef.current = selectedDate;
   }, [selectedDate, isInitialLoad]);
 
-  // 🔄 핵심: 컴포넌트 마운트 시 및 selectedDate 변경 시 localStorage에서 데이터 로드
+  // 🔄 핵심: 컴포넌트 마운트 시 및 selectedDate 변경 시 데이터 로드 (localStorage + Firebase)
   // 🛑 이중 실행 강제 방지: hasLoadedRef로 해당 날짜의 데이터가 이미 로드되었는지 확인
-  // 🎣 의존성 배열은 [selectedDate]로 유지하되, 로딩 중에는 저장이 실행되지 않도록 보장
+  // 🎣 의존성 배열은 [selectedDate, isAuthenticated, user]로 유지하되, 로딩 중에는 저장이 실행되지 않도록 보장
   useEffect(() => {
     // 🛑 이중 실행 강제 방지: 이미 해당 날짜의 데이터를 로드했으면 실행하지 않음
     // 단, 날짜가 변경된 경우에는 새로운 날짜이므로 로드가 필요함
@@ -124,85 +127,97 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
     // ⏱️ 로딩 중임을 표시하여 저장 로직이 실행되지 않도록 함
     setIsInitialLoad(true);
     
-    // 🔑 localStorage 키 확인: 날짜별로 올바른 데이터를 가져오는지 확인
-    const saved = localStorage.getItem(STORAGE_KEY);
-    
-    if (saved) {
-      try {
-        const allData: Record<DateString, TimePlannerData> = JSON.parse(saved);
-        const dayData = allData[selectedDate];
-        
-        // 🔍 로드된 데이터의 유효성 검사 강화
-        if (dayData && dayData.blocks && Array.isArray(dayData.blocks) && dayData.blocks.length > 0) {
-          // 저장된 블록 데이터를 상태에 로드
-          const loadedBlocks = dayData.blocks;
-          
-          // 🔍 유효성 검사: 블록 데이터가 유효한지 확인
-          const isValidBlocks = loadedBlocks.every(block => 
-            block && 
-            typeof block.id === 'string' && 
-            typeof block.startTime === 'number' && 
-            typeof block.endTime === 'number' &&
-            typeof block.color === 'string'
-          );
-          
-          if (isValidBlocks) {
-            setBlocks(loadedBlocks);
-            // ref도 업데이트
-            blocksRef.current = loadedBlocks;
-            
-            if (dayData.categories && dayData.categories.length > 0) {
-              // 카테고리 이름은 저장된 데이터에서 로드
-              const updatedCategories = defaultColors.map((color, index) => ({
-                color,
-                name: dayData.categories[index]?.name || `색상 ${index + 1}`,
-              }));
-              setCategories(updatedCategories);
-              categoriesRef.current = updatedCategories;
-            }
-            
-            // 🛑 로딩 완료 표시: 해당 날짜의 데이터 로드 완료
-            hasLoadedRef.current[selectedDate] = true;
-          } else {
-            // 유효하지 않은 데이터: 상태를 업데이트하지 않고 로딩 중단
-            // 로딩 완료 표시는 하지 않음 (다음에 다시 시도할 수 있도록)
-            isLoadingRef.current = false;
-            setIsLoading(false);
-            setIsInitialLoad(false);
-            return;
+    const loadData = async () => {
+      let dayData: TimePlannerData | null = null;
+      
+      // 1. localStorage에서 데이터 로드
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const allData: Record<DateString, TimePlannerData> = JSON.parse(saved);
+          dayData = allData[selectedDate] || null;
+        } catch (error) {
+          console.error('Failed to parse localStorage data:', error);
+        }
+      }
+      
+      // 2. Firebase에서 데이터 로드 (인증된 경우)
+      if (isAuthenticated && user) {
+        try {
+          const firebaseData = await timePlannerService.getTimePlannerData(selectedDate);
+          if (firebaseData) {
+            // Firebase 데이터가 있으면 우선 사용, 없으면 localStorage 데이터 사용
+            dayData = firebaseData;
           }
+        } catch (error) {
+          console.error('Failed to load data from Firebase:', error);
+          // Firebase 로드 실패 시 localStorage 데이터 사용
+        }
+      }
+      
+      // 3. 데이터 적용
+      if (dayData && dayData.blocks && Array.isArray(dayData.blocks) && dayData.blocks.length > 0) {
+        const loadedBlocks = dayData.blocks;
+        
+        // 🔍 유효성 검사: 블록 데이터가 유효한지 확인
+        const isValidBlocks = loadedBlocks.every(block => 
+          block && 
+          typeof block.id === 'string' && 
+          typeof block.startTime === 'number' && 
+          typeof block.endTime === 'number' &&
+          typeof block.color === 'string'
+        );
+        
+        if (isValidBlocks) {
+          setBlocks(loadedBlocks);
+          blocksRef.current = loadedBlocks;
+          
+          if (dayData.categories && dayData.categories.length > 0) {
+            const updatedCategories = defaultColors.map((color, index) => ({
+              color,
+              name: dayData.categories[index]?.name || `색상 ${index + 1}`,
+            }));
+            setCategories(updatedCategories);
+            categoriesRef.current = updatedCategories;
+          }
+          
+          hasLoadedRef.current[selectedDate] = true;
         } else {
-          // 해당 날짜에 데이터가 없으면 빈 배열로 초기화 (하지만 저장하지 않음)
           setBlocks([]);
           blocksRef.current = [];
-          // 🛑 로딩 완료 표시: 빈 데이터도 로드 완료로 표시 (다시 로드하지 않도록)
           hasLoadedRef.current[selectedDate] = true;
         }
-      } catch (error) {
+      } else {
         setBlocks([]);
         blocksRef.current = [];
-        // 🛑 로딩 완료 표시: 에러 발생 시에도 로드 완료로 표시 (무한 재시도 방지)
         hasLoadedRef.current[selectedDate] = true;
       }
-    } else {
-      // localStorage에 데이터가 없으면 빈 배열로 초기화 (하지만 저장하지 않음)
-      setBlocks([]);
-      blocksRef.current = [];
-      // 🛑 로딩 완료 표시: 빈 데이터도 로드 완료로 표시
-      hasLoadedRef.current[selectedDate] = true;
+      
+      // ⏱️ 로딩 완료
+      setIsInitialLoad(false);
+      isLoadingRef.current = false;
+      setIsLoading(false);
+    };
+    
+    loadData();
+  }, [selectedDate, isAuthenticated, user]);
+
+  // 카테고리 설정 저장 (localStorage + Firebase)
+  useEffect(() => {
+    if (isInitialLoad || isLoading) {
+      return;
     }
     
-    // ⏱️ 로딩 완료: 저장 useEffect가 실행되지 않도록 먼저 isInitialLoad를 false로 설정
-    // 그 다음 isLoading을 false로 설정하여 다음 렌더링에서 저장이 가능하도록 함
-    setIsInitialLoad(false);
-    isLoadingRef.current = false;
-    setIsLoading(false);
-  }, [selectedDate]);
-
-  // 카테고리 설정 저장
-  useEffect(() => {
+    // localStorage에 저장
     localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-  }, [categories]);
+    
+    // Firebase에 저장 (인증된 경우)
+    if (isAuthenticated && user) {
+      timePlannerService.saveTimePlannerCategories(categories).catch(error => {
+        console.error('Failed to save categories to Firebase:', error);
+      });
+    }
+  }, [categories, isAuthenticated, user, isInitialLoad, isLoading]);
 
   // blocks와 categories ref 업데이트
   useEffect(() => {
@@ -213,7 +228,7 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
     categoriesRef.current = categories;
   }, [categories]);
 
-  // 💾 핵심: blocks나 categories가 변경될 때마다 즉시 localStorage에 저장
+  // 💾 핵심: blocks나 categories가 변경될 때마다 즉시 localStorage와 Firebase에 저장
   // ⏱️ 로딩 중에는 절대 저장하지 않음 (로딩 직후 빈 데이터로 덮어쓰는 것을 방지)
   // 🔑 localStorage 저장 자동 트리거 차단: 로딩 과정에서 설정된 상태값을 이용하여 저장 차단
   useEffect(() => {
@@ -227,33 +242,9 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
       return;
     }
     
-    // 🔑 localStorage 키 확인: 올바른 날짜의 데이터를 저장하는지 확인
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let allData: Record<DateString, TimePlannerData> = {};
-    if (saved) {
-      try {
-        allData = JSON.parse(saved);
-      } catch {
-        allData = {};
-      }
-    }
-    
-    // 현재 날짜의 데이터를 localStorage에 저장
-    allData[selectedDate] = {
-      date: selectedDate,
-      blocks,
-      categories,
-    };
-    
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-      // ref도 업데이트하여 언마운트 시 최신 데이터 보장
-      blocksRef.current = blocks;
-      categoriesRef.current = categories;
-    } catch (error) {
-      // 저장 실패 시 무시
-    }
-  }, [blocks, categories, selectedDate, isInitialLoad, isLoading]);
+    // 저장 실행
+    saveDataToStorage(blocks, categories);
+  }, [blocks, categories, selectedDate, isInitialLoad, isLoading, isAuthenticated, user]);
 
   // 🔄 핵심: 컴포넌트 언마운트 시(탭 이동 시)에도 데이터 저장 보장
   // 탭 이동은 데이터에 영향을 주지 않아야 하므로, 언마운트 전에 반드시 저장합니다
@@ -388,9 +379,9 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
     );
   };
 
-  // 💾 핵심: 데이터 저장 헬퍼 함수 - 모든 변경사항을 즉시 localStorage에 저장
+  // 💾 핵심: 데이터 저장 헬퍼 함수 - 모든 변경사항을 즉시 localStorage와 Firebase에 저장
   // 이 함수는 블록 클릭, 카테고리 변경 등 모든 데이터 변경 시점에 호출됩니다
-  const saveDataToStorage = (blocksToSave: TimeBlock[], categoriesToSave: TimePlannerCategory[]) => {
+  const saveDataToStorage = async (blocksToSave: TimeBlock[], categoriesToSave: TimePlannerCategory[]) => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       let allData: Record<DateString, TimePlannerData> = {};
@@ -403,17 +394,37 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
       }
       
       // 현재 날짜의 데이터를 localStorage에 저장
-      allData[selectedDate] = {
+      const dataToSave: TimePlannerData = {
         date: selectedDate,
         blocks: blocksToSave,
         categories: categoriesToSave,
       };
+      
+      allData[selectedDate] = dataToSave;
       
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
       
       // ref도 업데이트하여 언마운트 시 최신 데이터 보장
       blocksRef.current = blocksToSave;
       categoriesRef.current = categoriesToSave;
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isAuthenticated && user) {
+        try {
+          await timePlannerService.saveTimePlannerData(dataToSave);
+        } catch (error) {
+          console.error('Failed to save data to Firebase:', error);
+        }
+      }
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isAuthenticated && user) {
+        try {
+          await timePlannerService.saveTimePlannerData(dataToSave);
+        } catch (error) {
+          console.error('Failed to save data to Firebase:', error);
+        }
+      }
     } catch (error) {
       // 저장 실패 시 무시
     }
@@ -688,15 +699,14 @@ export default function TimePlannerPanel({ selectedDate, onReset, isCollapsed = 
         <p className="time-planner-hint">더블 클릭으로 라벨 이름을 변경합니다.</p>
       </div>
 
-      {showResetConfirm && (
-        <ConfirmDialog
-          message="타임 테이블을 정말 리셋할까요?"
-          confirmText="리셋"
-          cancelText="취소"
-          onConfirm={handleResetBlocks}
-          onCancel={() => setShowResetConfirm(false)}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={showResetConfirm}
+        message="타임 테이블을 정말 리셋할까요?"
+        confirmText="리셋"
+        cancelText="취소"
+        onConfirm={handleResetBlocks}
+        onCancel={() => setShowResetConfirm(false)}
+      />
 
       {/* 카테고리 선택 UI - 2단 구성 */}
       <div className="time-planner-categories">

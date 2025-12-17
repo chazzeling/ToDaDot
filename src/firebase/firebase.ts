@@ -134,11 +134,42 @@ export async function signInWithGoogleToken(accessToken: string, idToken: string
 }
 
 /**
+ * 모바일 디바이스 감지
+ */
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  
+  // 터치 스크린 감지
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // 작은 화면 크기 감지
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  // User Agent 기반 모바일 감지
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+  const isMobileUserAgent = mobileRegex.test(userAgent.toLowerCase());
+  
+  return hasTouchScreen || (isSmallScreen && isMobileUserAgent);
+}
+
+/**
  * Google 팝업 로그인 (웹/Electron용)
+ * 모바일에서는 자동으로 리디렉션 방식 사용
  */
 export async function signInWithGooglePopup(): Promise<User> {
   if (!auth) {
     throw new Error('Firebase not initialized');
+  }
+
+  // 모바일 디바이스인 경우 리디렉션 방식 사용
+  if (isMobileDevice()) {
+    console.log('📱 Mobile device detected, using redirect method...');
+    await signInWithGoogleRedirect();
+    // 리디렉션은 페이지를 이동시키므로 여기서는 에러를 던짐
+    throw new Error('리디렉션 방식으로 로그인을 시도했습니다. 페이지가 새로고침됩니다.');
   }
 
   // Electron 환경에서 origin 확인

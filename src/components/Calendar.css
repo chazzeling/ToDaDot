@@ -236,6 +236,27 @@
   background-clip: padding-box;
 }
 
+/* 모바일 반응형 디자인 */
+@media (max-width: 768px) {
+  .calendar-wrapper {
+    height: auto;
+    min-height: auto;
+  }
+
+  .calendar {
+    max-height: none;
+    height: auto;
+    overflow: visible;
+    flex: none;
+  }
+
+  .calendar-days {
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+}
+
 .calendar-day {
   aspect-ratio: 1;
   display: flex;

@@ -227,6 +227,15 @@ export function useTodos() {
 
   // 사분면으로 투두 추가
   const addTodoByQuadrant = useCallback(async (quadrant: Quadrant, text: string) => {
+    // 같은 quadrant의 todos 찾기
+    const quadrantTodos = todos.filter(t => t.quadrant === quadrant && t.date === selectedDate);
+    
+    // order가 있는 todos의 최소 order 찾기
+    const todosWithOrder = quadrantTodos.filter(t => t.order !== undefined && t.order !== null);
+    const minOrder = todosWithOrder.length > 0 
+      ? Math.min(...todosWithOrder.map(t => t.order!))
+      : -1; // order가 없으면 -1부터 시작
+    
     const newTodo: TodoItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       text,
@@ -234,15 +243,26 @@ export function useTodos() {
       createdAt: Date.now(),
       date: selectedDate,
       quadrant,
+      order: minOrder - 1, // 맨 위에 오도록 order를 더 작게 설정
     };
 
-    const updatedTodos = [...todos, newTodo];
+    // 맨 앞에 추가
+    const updatedTodos = [newTodo, ...todos];
     setTodos(updatedTodos);
     await saveTodos(updatedTodos);
   }, [todos, selectedDate, saveTodos]);
 
   // 카테고리로 투두 추가
   const addTodoByCategory = useCallback(async (categoryId: string, text: string) => {
+    // 같은 category의 todos 찾기
+    const categoryTodos = todos.filter(t => t.categoryId === categoryId && t.date === selectedDate);
+    
+    // order가 있는 todos의 최소 order 찾기
+    const todosWithOrder = categoryTodos.filter(t => t.order !== undefined && t.order !== null);
+    const minOrder = todosWithOrder.length > 0 
+      ? Math.min(...todosWithOrder.map(t => t.order!))
+      : -1; // order가 없으면 -1부터 시작
+    
     const newTodo: TodoItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       text,
@@ -250,9 +270,11 @@ export function useTodos() {
       createdAt: Date.now(),
       date: selectedDate,
       categoryId,
+      order: minOrder - 1, // 맨 위에 오도록 order를 더 작게 설정
     };
 
-    const updatedTodos = [...todos, newTodo];
+    // 맨 앞에 추가
+    const updatedTodos = [newTodo, ...todos];
     setTodos(updatedTodos);
     await saveTodos(updatedTodos);
   }, [todos, selectedDate, saveTodos]);

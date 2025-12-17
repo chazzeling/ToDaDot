@@ -903,10 +903,23 @@ async function checkAndInstallVCRedist(): Promise<void> {
     }
 
     // VC++ Redistributable 설치 파일 경로
-    const vcRedistPath = path.join(process.resourcesPath, 'vc_redist.x64.exe');
+    // 포터블 버전과 설치 버전 모두 지원
+    let vcRedistPath = path.join(process.resourcesPath, 'vc_redist.x64.exe');
+    
+    // 포터블 버전의 경우 실행 파일과 같은 디렉토리 확인
+    if (!fs.existsSync(vcRedistPath) && app.isPackaged) {
+      const portablePath = path.join(path.dirname(process.execPath), 'vc_redist.x64.exe');
+      if (fs.existsSync(portablePath)) {
+        vcRedistPath = portablePath;
+      }
+    }
     
     if (!fs.existsSync(vcRedistPath)) {
-      console.warn('⚠️ VC++ Redistributable 설치 파일을 찾을 수 없습니다:', vcRedistPath);
+      console.warn('⚠️ VC++ Redistributable 설치 파일을 찾을 수 없습니다.');
+      console.warn('   시도한 경로:', path.join(process.resourcesPath, 'vc_redist.x64.exe'));
+      if (app.isPackaged) {
+        console.warn('   포터블 경로:', path.join(path.dirname(process.execPath), 'vc_redist.x64.exe'));
+      }
       return;
     }
 

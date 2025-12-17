@@ -542,4 +542,99 @@
   white-space: nowrap;
 }
 
+/* 모바일 반응형 디자인 */
+@media (max-width: 768px) {
+  .diary-tab {
+    height: auto;
+    overflow: visible;
+    min-height: 100vh;
+  }
+
+  .diary-content {
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+  }
+
+  .diary-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow: visible;
+    height: auto;
+  }
+
+  .diary-left-panel {
+    width: 100%;
+    min-width: 100%;
+    max-height: none;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+    overflow: visible;
+    flex: none;
+  }
+
+  .diary-right-panel {
+    width: 100%;
+    padding: 12px;
+    min-height: auto;
+    overflow: visible;
+    height: auto;
+    flex: none;
+  }
+
+  .diary-sidebar {
+    width: 100%;
+    min-width: 100%;
+    max-height: none;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px;
+    overflow: visible;
+  }
+
+  .diary-editor-wrapper {
+    min-height: auto;
+    height: auto;
+  }
+
+  .diary-fields {
+    gap: 12px;
+  }
+
+  .diary-field-wrapper {
+    gap: 6px;
+  }
+
+  .diary-input {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .diary-left-panel {
+    padding: 8px;
+  }
+
+  .diary-right-panel {
+    padding: 8px;
+  }
+
+  .diary-sidebar {
+    padding: 6px;
+  }
+
+  .diary-fields {
+    gap: 10px;
+  }
+
+  .diary-field-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
 

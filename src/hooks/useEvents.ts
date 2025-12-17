@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Event, DateString } from '../types';
 import { useGoogleSync } from './useGoogleSync';
+import { useFirebaseAuth } from './useFirebaseAuth';
 import { extractMetadata, removeMetadataFromDescription, addMetadataToDescription } from '../utils/googleCalendarMetadata';
+import * as eventService from '../firebase/eventService';
 
 const STORAGE_KEY = 'events';
 
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const { isAuthenticated } = useGoogleSync();
+  const { isAuthenticated: isGoogleAuthenticated } = useGoogleSync();
+  const { user, isAuthenticated: isFirebaseAuthenticated } = useFirebaseAuth();
+  const hasSyncedFirebaseRef = useRef(false);
 
   // 이벤트 불러오기 (Google API 또는 로컬 스토리지)
   useEffect(() => {
@@ -24,7 +28,31 @@ export function useEvents() {
         }
       })() : [];
 
-      if (isAuthenticated && window.electronAPI) {
+      // Firebase에서 불러오기 (인증된 경우, Google Calendar보다 우선)
+      if (isFirebaseAuthenticated && user && !hasSyncedFirebaseRef.current) {
+        try {
+          const firebaseEvents = await eventService.getAllEvents();
+          
+          if (firebaseEvents.length > 0) {
+            // Firebase 데이터와 로컬 데이터 병합 (로컬 데이터 우선)
+            const mergedEvents = mergeEvents(localEvents, firebaseEvents);
+            setEvents(mergedEvents);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedEvents));
+            hasSyncedFirebaseRef.current = true;
+            return; // Firebase 데이터가 있으면 Google Calendar는 건너뜀
+          } else if (localEvents.length > 0) {
+            // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
+            await eventService.saveEventsBatch(localEvents);
+            hasSyncedFirebaseRef.current = true;
+          } else {
+            hasSyncedFirebaseRef.current = true;
+          }
+        } catch (error) {
+          console.error('Failed to load events from Firebase:', error);
+        }
+      }
+      
+      if (isGoogleAuthenticated && window.electronAPI) {
         // Google Calendar에서 불러오기
         try {
           const today = new Date();
@@ -108,25 +136,43 @@ export function useEvents() {
     return () => {
       window.removeEventListener('eventCategoryUpdated', handleCategoryUpdate as EventListener);
     };
-  }, [isAuthenticated]);
+  }, [isGoogleAuthenticated, isFirebaseAuthenticated, user]);
 
-  // 로컬 스토리지에 저장 (Google API 미인증 시 또는 백업용)
+  // 로컬 스토리지와 Firebase에 저장
   useEffect(() => {
-    // Google API가 인증되지 않았거나 실패한 경우 로컬에 저장
-    if (!isAuthenticated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    } else {
-      // Google API 사용 중이어도 백업으로 로컬에 저장
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    // localStorage에 저장 (항상)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    
+    // Firebase에 저장 (인증된 경우)
+    if (isFirebaseAuthenticated && user) {
+      // 각 이벤트를 개별적으로 저장
+      events.forEach(event => {
+        eventService.saveEvent(event).catch(error => {
+          console.error('Failed to save event to Firebase:', error);
+        });
+      });
     }
-  }, [events, isAuthenticated]);
+  }, [events, isFirebaseAuthenticated, user]);
+  
+  // 병합 함수: 로컬 데이터 우선
+  const mergeEvents = (local: Event[], firebase: Event[]): Event[] => {
+    const mergedMap = new Map<string, Event>();
+    
+    // Firebase 데이터 먼저 추가
+    firebase.forEach(event => mergedMap.set(event.id, event));
+    
+    // 로컬 데이터로 덮어쓰기 (같은 ID가 있으면 로컬 데이터 우선)
+    local.forEach(event => mergedMap.set(event.id, event));
+    
+    return Array.from(mergedMap.values());
+  };
 
   const getEventsForDate = (date: DateString) => {
     return events.filter((event) => event.date === date);
   };
 
   const addEvent = async (date: DateString, title: string, color: string, categoryId?: string, time?: string, endDate?: DateString) => {
-    if (isAuthenticated && window.electronAPI) {
+      if (isGoogleAuthenticated && window.electronAPI) {
       // Google Calendar에 추가
       try {
         const eventDateTime = new Date(date);
@@ -235,7 +281,7 @@ export function useEvents() {
     // endDate는 명시적으로 전달되면 사용, 없으면 기존 값 유지
     const updatedEndDate = endDate !== undefined ? endDate : existingEvent.endDate;
 
-    if (isAuthenticated && window.electronAPI && existingEvent.googleEventId) {
+    if (isGoogleAuthenticated && window.electronAPI && existingEvent.googleEventId) {
       // Google Calendar 업데이트
       try {
         const eventDate = date || existingEvent.date;
@@ -387,7 +433,14 @@ export function useEvents() {
       return updatedEvents;
     });
 
-    if (isAuthenticated && window.electronAPI && existingEvent.googleEventId) {
+    // Firebase에서도 삭제 (인증된 경우)
+    if (isFirebaseAuthenticated && user) {
+      eventService.deleteEvent(id).catch(error => {
+        console.error('Failed to delete event from Firebase:', error);
+      });
+    }
+
+    if (isGoogleAuthenticated && window.electronAPI && existingEvent.googleEventId) {
       // Google Calendar 삭제 (비동기, 실패해도 로컬은 이미 삭제됨)
       try {
         const result = await window.electronAPI.googleDeleteEvent(existingEvent.googleEventId);
@@ -460,7 +513,7 @@ export function useEvents() {
 
   // 수동 동기화 함수 (데이터 마이그레이션 로직 포함)
   const syncWithGoogle = async () => {
-    if (!isAuthenticated || !window.electronAPI) {
+    if (!isGoogleAuthenticated || !window.electronAPI) {
       return { success: false, error: 'Not authenticated' };
     }
 

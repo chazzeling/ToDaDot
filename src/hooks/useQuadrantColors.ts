@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Quadrant } from '../types';
+import { useFirebaseAuth } from './useFirebaseAuth';
+import * as settingsService from '../firebase/settingsService';
 
 const STORAGE_KEY = 'quadrant-colors';
 const STORAGE_KEY_PRESET = 'quadrant-color-preset';
@@ -38,62 +40,103 @@ export const COLOR_PRESETS: Record<ColorPreset, Record<Quadrant, string>> = {
 };
 
 export function useQuadrantColors() {
+  const { user, isAuthenticated } = useFirebaseAuth();
   const [preset, setPreset] = useState<ColorPreset>('spring');
   const [colors, setColors] = useState<Record<Quadrant, string>>(COLOR_PRESETS.spring);
+  const hasSyncedRef = useRef(false);
 
-  // 로컬 스토리지에서 불러오기
+  // 로컬 스토리지와 Firebase에서 불러오기
   useEffect(() => {
-    const savedPreset = localStorage.getItem(STORAGE_KEY_PRESET);
-    const savedColors = localStorage.getItem(STORAGE_KEY);
-    
-    if (savedPreset) {
-      try {
-        const parsedPreset = savedPreset as ColorPreset;
-        // 기존 프리셋 이름을 새 이름으로 마이그레이션
-        let presetKey: ColorPreset = parsedPreset;
-        if (parsedPreset === 'default') presetKey = 'spring';
-        else if (parsedPreset === 'calm') presetKey = 'summer';
-        else if (parsedPreset === 'deep') presetKey = 'autumn';
-        
-        if (COLOR_PRESETS[presetKey]) {
-          setPreset(presetKey);
-          setColors(COLOR_PRESETS[presetKey]);
-          // 마이그레이션된 경우 저장
-          if (presetKey !== parsedPreset) {
-            localStorage.setItem(STORAGE_KEY_PRESET, presetKey);
+    const loadData = async () => {
+      // 1. localStorage에서 불러오기
+      const savedPreset = localStorage.getItem(STORAGE_KEY_PRESET);
+      const savedColors = localStorage.getItem(STORAGE_KEY);
+      
+      let localPreset: ColorPreset = 'spring';
+      let localColors: Record<Quadrant, string> = COLOR_PRESETS.spring;
+      
+      if (savedPreset) {
+        try {
+          const parsedPreset = savedPreset as ColorPreset;
+          // 기존 프리셋 이름을 새 이름으로 마이그레이션
+          let presetKey: ColorPreset = parsedPreset;
+          if (parsedPreset === 'default') presetKey = 'spring';
+          else if (parsedPreset === 'calm') presetKey = 'summer';
+          else if (parsedPreset === 'deep') presetKey = 'autumn';
+          
+          if (COLOR_PRESETS[presetKey]) {
+            localPreset = presetKey;
+            localColors = COLOR_PRESETS[presetKey];
+            // 마이그레이션된 경우 저장
+            if (presetKey !== parsedPreset) {
+              localStorage.setItem(STORAGE_KEY_PRESET, presetKey);
+            }
           }
-        } else {
-          // 유효하지 않은 프리셋인 경우 기본값 사용
-          setPreset('spring');
-          setColors(COLOR_PRESETS.spring);
-          localStorage.setItem(STORAGE_KEY_PRESET, 'spring');
+        } catch (error) {
+          console.error('Failed to load quadrant color preset:', error);
         }
-      } catch (error) {
-        console.error('Failed to load quadrant color preset:', error);
-        // 에러 발생 시 기본값 사용
-        setPreset('spring');
-        setColors(COLOR_PRESETS.spring);
-        localStorage.setItem(STORAGE_KEY_PRESET, 'spring');
       }
-    }
+      
+      if (savedColors) {
+        try {
+          const parsed = JSON.parse(savedColors);
+          localColors = { ...localColors, ...parsed };
+        } catch (error) {
+          console.error('Failed to load quadrant colors:', error);
+        }
+      }
+
+      // 2. Firebase에서 불러오기 (인증된 경우)
+      if (isAuthenticated && user && !hasSyncedRef.current) {
+        try {
+          const firebaseData = await settingsService.getQuadrantColors();
+          
+          if (firebaseData) {
+            // Firebase 데이터가 있으면 우선 사용
+            setPreset(firebaseData.preset as ColorPreset);
+            setColors(firebaseData.colors as Record<Quadrant, string>);
+            localStorage.setItem(STORAGE_KEY_PRESET, firebaseData.preset);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(firebaseData.colors));
+          } else {
+            // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
+            setPreset(localPreset);
+            setColors(localColors);
+            await settingsService.saveQuadrantColors(localColors, localPreset);
+          }
+          
+          hasSyncedRef.current = true;
+        } catch (error) {
+          console.error('Failed to load quadrant colors from Firebase:', error);
+          setPreset(localPreset);
+          setColors(localColors);
+        }
+      } else {
+        setPreset(localPreset);
+        setColors(localColors);
+      }
+    };
     
-    if (savedColors) {
-      try {
-        const parsed = JSON.parse(savedColors);
-        setColors((prev) => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Failed to load quadrant colors:', error);
+    loadData();
+  }, [isAuthenticated, user]);
+
+  // 로컬 스토리지와 Firebase에 저장
+  useEffect(() => {
+    if (hasSyncedRef.current) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(colors));
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isAuthenticated && user) {
+        settingsService.saveQuadrantColors(colors, preset).catch(error => {
+          console.error('Failed to save quadrant colors to Firebase:', error);
+        });
       }
     }
-  }, []);
-
-  // 로컬 스토리지에 저장
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(colors));
-  }, [colors]);
+  }, [colors, preset, isAuthenticated, user]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PRESET, preset);
+    if (hasSyncedRef.current) {
+      localStorage.setItem(STORAGE_KEY_PRESET, preset);
+    }
   }, [preset]);
 
   const updatePreset = (newPreset: ColorPreset) => {
