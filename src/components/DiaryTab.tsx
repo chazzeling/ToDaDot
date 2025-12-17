@@ -6,6 +6,8 @@ import RichTextEditor from './RichTextEditor';
 import MoodColorPicker from './MoodColorPicker';
 import TimePicker from './TimePicker';
 import { Clock, Nut, Bed, Target, ThumbsUp, Paintbrush, BadgeCheck, Pill, X, ChevronDown, ChevronUp, PawPrint } from 'lucide-react';
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth';
+import * as diaryService from '../firebase/diaryService';
 import './DiaryTab.css';
 
 interface DiaryTabProps {
@@ -104,6 +106,7 @@ export default function DiaryTab({
   moods = [],
   onMoodSelect,
 }: DiaryTabProps) {
+  const { user, isAuthenticated } = useFirebaseAuth();
   const [diaryEntry, setDiaryEntry] = useState<DiaryEntry>(() => ({
     date: selectedDate,
     goal: '',
@@ -256,55 +259,70 @@ export default function DiaryTab({
     return defaultColorNames[color] || color;
   }, [moodColorNames]);
 
-  // 날짜별 일기 데이터 로드
+  // 날짜별 일기 데이터 로드 (localStorage + Firebase)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const allEntries: Record<DateString, DiaryEntry> = JSON.parse(saved);
-        if (allEntries[selectedDate]) {
-          const entry = allEntries[selectedDate];
-          // sleepStart와 sleepEnd가 유효한 문자열 형식인지 검증
-          const validatedEntry: DiaryEntry = {
-            ...entry,
-            sleepStart: (typeof entry.sleepStart === 'string' && entry.sleepStart.includes(':')) 
-              ? entry.sleepStart 
-              : '',
-            sleepEnd: (typeof entry.sleepEnd === 'string' && entry.sleepEnd.includes(':')) 
-              ? entry.sleepEnd 
-              : '',
-            goal: typeof entry.goal === 'string' ? entry.goal : '',
-            goodThings: typeof entry.goodThings === 'string' ? entry.goodThings : '',
-            meals: typeof entry.meals === 'string' ? entry.meals : '',
-            diary: typeof entry.diary === 'string' ? entry.diary : '',
-            symptoms: Array.isArray(entry.symptoms) ? entry.symptoms : [],
-          };
-          setDiaryEntry(validatedEntry);
-          // 저장된 내용도 업데이트
-          setSavedContents({
-            goal: validatedEntry.goal,
-            goodThings: validatedEntry.goodThings,
-            meals: validatedEntry.meals,
-          });
-        } else {
-          setDiaryEntry({
-            date: selectedDate,
-            goal: '',
-            goodThings: '',
-            sleepStart: '',
-            sleepEnd: '',
-            meals: '',
-            diary: '',
-            symptoms: [],
-          });
-          setSavedContents({
-            goal: '',
-            goodThings: '',
-            meals: '',
-          });
+    const loadData = async () => {
+      let entry: DiaryEntry | null = null;
+      
+      // 1. localStorage에서 데이터 로드
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const allEntries: Record<DateString, DiaryEntry> = JSON.parse(saved);
+          entry = allEntries[selectedDate] || null;
+        } catch (e) {
+          console.error('Failed to load diary entries from localStorage:', e);
         }
-      } catch (e) {
-        console.error('Failed to load diary entries:', e);
+      }
+      
+      // 2. Firebase에서 데이터 로드 (인증된 경우)
+      if (isAuthenticated && user) {
+        try {
+          const firebaseDiaries = await diaryService.getDiariesByDate(selectedDate);
+          if (firebaseDiaries.length > 0) {
+            // Firebase에서 가장 최근 일기 사용
+            const firebaseDiary = firebaseDiaries[0];
+            try {
+              // content 필드에 DiaryEntry JSON이 저장되어 있음
+              const firebaseEntry: DiaryEntry = JSON.parse(firebaseDiary.content);
+              // Firebase 데이터가 있으면 우선 사용, 없으면 localStorage 데이터 사용
+              entry = firebaseEntry;
+            } catch (e) {
+              console.error('Failed to parse Firebase diary content:', e);
+              // 파싱 실패 시 기존 entry 유지
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load diary from Firebase:', error);
+          // Firebase 로드 실패 시 localStorage 데이터 사용
+        }
+      }
+      
+      // 3. 데이터 적용
+      if (entry) {
+        // sleepStart와 sleepEnd가 유효한 문자열 형식인지 검증
+        const validatedEntry: DiaryEntry = {
+          ...entry,
+          sleepStart: (typeof entry.sleepStart === 'string' && entry.sleepStart.includes(':')) 
+            ? entry.sleepStart 
+            : '',
+          sleepEnd: (typeof entry.sleepEnd === 'string' && entry.sleepEnd.includes(':')) 
+            ? entry.sleepEnd 
+            : '',
+          goal: typeof entry.goal === 'string' ? entry.goal : '',
+          goodThings: typeof entry.goodThings === 'string' ? entry.goodThings : '',
+          meals: typeof entry.meals === 'string' ? entry.meals : '',
+          diary: typeof entry.diary === 'string' ? entry.diary : '',
+          symptoms: Array.isArray(entry.symptoms) ? entry.symptoms : [],
+        };
+        setDiaryEntry(validatedEntry);
+        // 저장된 내용도 업데이트
+        setSavedContents({
+          goal: validatedEntry.goal,
+          goodThings: validatedEntry.goodThings,
+          meals: validatedEntry.meals,
+        });
+      } else {
         setDiaryEntry({
           date: selectedDate,
           goal: '',
@@ -321,27 +339,14 @@ export default function DiaryTab({
           meals: '',
         });
       }
-    } else {
-      setDiaryEntry({
-        date: selectedDate,
-        goal: '',
-        goodThings: '',
-        sleepStart: '',
-        sleepEnd: '',
-        meals: '',
-        diary: '',
-        symptoms: [],
-      });
-      setSavedContents({
-        goal: '',
-        goodThings: '',
-        meals: '',
-      });
-    }
-  }, [selectedDate]);
+    };
+    
+    loadData();
+  }, [selectedDate, isAuthenticated, user]);
 
-  // 데이터 저장
-  const saveEntry = useCallback((entry: DiaryEntry) => {
+  // 데이터 저장 (localStorage + Firebase)
+  const saveEntry = useCallback(async (entry: DiaryEntry) => {
+    // localStorage에 저장
     const saved = localStorage.getItem(STORAGE_KEY);
     let allEntries: Record<DateString, DiaryEntry> = {};
     if (saved) {
@@ -353,12 +358,30 @@ export default function DiaryTab({
     }
     allEntries[entry.date] = entry;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(allEntries));
-  }, []);
+    
+    // Firebase에 저장 (인증된 경우)
+    if (isAuthenticated && user) {
+      try {
+        // DiaryEntry를 Diary 형식으로 변환 (content에 JSON으로 저장)
+        const diaryId = `${entry.date}-diary`;
+        const now = Date.now();
+        await diaryService.saveDiary({
+          id: diaryId,
+          date: entry.date,
+          content: JSON.stringify(entry), // DiaryEntry 전체를 JSON으로 저장
+          createdAt: now,
+          updatedAt: now,
+        });
+      } catch (error) {
+        console.error('Failed to save diary to Firebase:', error);
+      }
+    }
+  }, [isAuthenticated, user]);
   
   // 필드 완료 처리
-  const handleFieldComplete = useCallback((field: 'goal' | 'goodThings' | 'meals' | 'diary') => {
+  const handleFieldComplete = useCallback(async (field: 'goal' | 'goodThings' | 'meals' | 'diary') => {
     setCompletedFields(prev => ({ ...prev, [field]: true }));
-    saveEntry(diaryEntry);
+    await saveEntry(diaryEntry);
     
     // 저장된 내용 업데이트
     if (field === 'goal' || field === 'goodThings' || field === 'meals') {
@@ -375,20 +398,20 @@ export default function DiaryTab({
   }, [diaryEntry, saveEntry]);
   
   // 증상 추가
-  const handleAddSymptom = useCallback(() => {
+  const handleAddSymptom = useCallback(async () => {
     if (symptomInput.trim()) {
       const updatedEntry = {
         ...diaryEntry,
         symptoms: [...(diaryEntry.symptoms || []), symptomInput.trim()],
       };
       setDiaryEntry(updatedEntry);
-      saveEntry(updatedEntry);
+      await saveEntry(updatedEntry);
       setSymptomInput('');
     }
   }, [symptomInput, diaryEntry, saveEntry]);
   
   // 증상 삭제
-  const handleRemoveSymptom = useCallback((index: number) => {
+  const handleRemoveSymptom = useCallback(async (index: number) => {
     const updatedSymptoms = [...(diaryEntry.symptoms || [])];
     updatedSymptoms.splice(index, 1);
     const updatedEntry = {
@@ -396,7 +419,7 @@ export default function DiaryTab({
       symptoms: updatedSymptoms,
     };
     setDiaryEntry(updatedEntry);
-    saveEntry(updatedEntry);
+    await saveEntry(updatedEntry);
   }, [diaryEntry, saveEntry]);
 
   // 시각을 분으로 변환 (24시간 범위, 0~1440분)
@@ -413,8 +436,10 @@ export default function DiaryTab({
   const handleFieldChange = useCallback((field: keyof DiaryEntry, value: string) => {
     setDiaryEntry(prev => {
       const updated = { ...prev, [field]: value };
-      // 변경 시 자동 저장
-      saveEntry(updated);
+      // 변경 시 자동 저장 (비동기이므로 await 없이 호출)
+      saveEntry(updated).catch(error => {
+        console.error('Failed to save diary entry:', error);
+      });
       return updated;
     });
   }, [saveEntry]);
@@ -426,6 +451,8 @@ export default function DiaryTab({
       
       const sleepStartMinutes = timeToMinutes24(diaryEntry.sleepStart);
       const sleepEndMinutes = timeToMinutes24(diaryEntry.sleepEnd);
+      
+      if (sleepStartMinutes === null || sleepEndMinutes === null) return '';
       
       let totalMinutes: number;
       if (sleepEndMinutes >= sleepStartMinutes) {

@@ -537,8 +537,8 @@
   overflow: hidden;
   cursor: grab;
   transition: all 0.2s;
-  min-height: 20px;
-  height: 20px;
+  min-height: 32px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.5);
   user-select: none;
 }

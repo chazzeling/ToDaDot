@@ -115,10 +115,12 @@ export async function getDiariesByDate(date: string): Promise<Diary[]> {
   }
 
   const diariesRef = collection(firestore, getDiariesCollectionPath(user.uid));
-  const q = query(diariesRef, where('date', '==', date), orderBy('createdAt', 'desc'));
+  // orderBy 제거: 날짜별 필터링만 사용 (인덱스 불필요)
+  const q = query(diariesRef, where('date', '==', date));
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(doc => {
+  // 클라이언트에서 정렬 (createdAt 기준 내림차순)
+  const diaries = snapshot.docs.map(doc => {
     const data = doc.data();
     return {
       ...data,
@@ -126,6 +128,9 @@ export async function getDiariesByDate(date: string): Promise<Diary[]> {
       updatedAt: (data.updatedAt as Timestamp).toMillis(),
     } as Diary;
   });
+
+  // createdAt 기준으로 정렬 (최신순)
+  return diaries.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 /**
@@ -240,10 +245,12 @@ export async function getMemosByDate(date: string): Promise<Memo[]> {
   }
 
   const memosRef = collection(firestore, getMemosCollectionPath(user.uid));
-  const q = query(memosRef, where('date', '==', date), orderBy('createdAt', 'desc'));
+  // orderBy 제거: 날짜별 필터링만 사용 (인덱스 불필요)
+  const q = query(memosRef, where('date', '==', date));
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(doc => {
+  // 클라이언트에서 정렬 (createdAt 기준 내림차순)
+  const memos = snapshot.docs.map(doc => {
     const data = doc.data();
     return {
       ...data,
@@ -251,6 +258,9 @@ export async function getMemosByDate(date: string): Promise<Memo[]> {
       updatedAt: (data.updatedAt as Timestamp).toMillis(),
     } as Memo;
   });
+
+  // createdAt 기준으로 정렬 (최신순)
+  return memos.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 /**

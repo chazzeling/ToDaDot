@@ -106,18 +106,44 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
     previousDateRef.current = selectedDate;
   }, [selectedDate, isInitialLoad]);
 
+  // 🔄 인증 상태 변경 시 hasLoadedRef 리셋 (Firebase 동기화를 위해)
+  const previousUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (user && user.uid !== previousUserRef.current) {
+      console.log('🔄 User changed, resetting hasLoadedRef for Firebase sync');
+      hasLoadedRef.current = {};
+      previousUserRef.current = user.uid;
+    } else if (!user && previousUserRef.current) {
+      console.log('🔄 User logged out, resetting hasLoadedRef');
+      hasLoadedRef.current = {};
+      previousUserRef.current = null;
+    }
+  }, [user]);
+
   // 🔄 핵심: 컴포넌트 마운트 시 및 selectedDate 변경 시 데이터 로드 (localStorage + Firebase)
   // 🛑 이중 실행 강제 방지: hasLoadedRef로 해당 날짜의 데이터가 이미 로드되었는지 확인
   // 🎣 의존성 배열은 [selectedDate, isAuthenticated, user]로 유지하되, 로딩 중에는 저장이 실행되지 않도록 보장
   useEffect(() => {
+    console.log('🔄 TimeRecordPanel useEffect triggered:', { selectedDate, isAuthenticated, hasUser: !!user, userId: user?.uid, hasLoaded: hasLoadedRef.current[selectedDate], previousDate: previousDateRef.current, isLoading: isLoadingRef.current });
+    
     // 🛑 이중 실행 강제 방지: 이미 해당 날짜의 데이터를 로드했으면 실행하지 않음
     // 단, 날짜가 변경된 경우에는 새로운 날짜이므로 로드가 필요함
-    if (hasLoadedRef.current[selectedDate] && previousDateRef.current === selectedDate) {
+    // 🔄 Firebase 동기화를 위해 인증된 경우에는 항상 Firebase에서 로드 시도
+    if (hasLoadedRef.current[selectedDate] && previousDateRef.current === selectedDate && !isAuthenticated) {
+      console.log('⏭️ Skipping load - already loaded for date (not authenticated):', selectedDate);
       return;
+    }
+    
+    // 🔄 인증된 경우 Firebase에서 최신 데이터를 가져오기 위해 항상 로드
+    if (hasLoadedRef.current[selectedDate] && previousDateRef.current === selectedDate && isAuthenticated) {
+      console.log('🔄 Already loaded but authenticated - forcing Firebase reload for sync');
+      // hasLoadedRef를 리셋하여 Firebase 로드 강제
+      hasLoadedRef.current[selectedDate] = false;
     }
     
     // 🛑 이중 실행 강제 방지: 이미 로딩 중이면 실행하지 않음
     if (isLoadingRef.current) {
+      console.log('⏭️ Skipping load - already loading');
       return;
     }
     
@@ -136,18 +162,47 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
         try {
           const allData: Record<DateString, TimePlannerData> = JSON.parse(saved);
           dayData = allData[selectedDate] || null;
+          console.log('📦 Loaded from localStorage:', dayData ? `blocks: ${dayData.blocks?.length || 0}` : 'no data');
         } catch (error) {
           console.error('Failed to parse localStorage data:', error);
         }
+      } else {
+        console.log('📦 No localStorage data found');
       }
       
       // 2. Firebase에서 데이터 로드 (인증된 경우)
+      console.log('🔍 Checking Firebase load condition:', { isAuthenticated, hasUser: !!user });
       if (isAuthenticated && user) {
+        console.log('🔍 Attempting to load time record data from Firebase for:', selectedDate, 'user:', user.uid);
         try {
           const firebaseData = await timeRecordService.getTimeRecordData(selectedDate);
+          console.log('📥 Firebase data received:', firebaseData ? 'exists' : 'null', firebaseData);
           if (firebaseData) {
-            // Firebase 데이터가 있으면 우선 사용, 없으면 localStorage 데이터 사용
+            console.log('📥 Loaded time record data from Firebase:', selectedDate, 'blocks:', firebaseData.blocks?.length || 0, 'data:', firebaseData);
+            // Firebase 데이터가 있으면 무조건 우선 사용 (동기화 우선)
+            // Firebase 데이터가 있으면 항상 사용 (blocks가 없어도 구조는 유지)
             dayData = firebaseData;
+            console.log('✅ Using Firebase data for time record:', selectedDate, 'blocks count:', dayData.blocks?.length || 0);
+          } else {
+            console.log('ℹ️ No Firebase data found for time record:', selectedDate, 'using localStorage');
+          }
+          
+          // 카테고리도 Firebase에서 로드 (전역 설정)
+          try {
+            const firebaseCategories = await timeRecordService.getTimeRecordCategories();
+            if (firebaseCategories && firebaseCategories.length > 0) {
+              // Firebase 카테고리가 있으면 사용
+              const updatedCategories = defaultColors.map((color, index) => ({
+                color,
+                name: firebaseCategories[index]?.name || `색상 ${index + 1}`,
+              }));
+              setCategories(updatedCategories);
+              categoriesRef.current = updatedCategories;
+              // localStorage에도 저장
+              localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
+            }
+          } catch (error) {
+            console.error('Failed to load categories from Firebase:', error);
           }
         } catch (error) {
           console.error('Failed to load data from Firebase:', error);
@@ -156,11 +211,14 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
       }
       
       // 3. 데이터 적용
-      if (dayData && dayData.blocks && Array.isArray(dayData.blocks) && dayData.blocks.length > 0) {
+      console.log('🔍 Applying time record data for:', selectedDate, 'dayData:', dayData, 'blocks:', dayData?.blocks?.length || 0);
+      
+      if (dayData && dayData.blocks && Array.isArray(dayData.blocks)) {
         const loadedBlocks = dayData.blocks;
+        console.log('📦 Time record blocks to apply:', loadedBlocks.length, 'blocks:', loadedBlocks);
         
         // 🔍 유효성 검사: 블록 데이터가 유효한지 확인
-        const isValidBlocks = loadedBlocks.every(block => 
+        const isValidBlocks = loadedBlocks.length === 0 || loadedBlocks.every(block => 
           block && 
           typeof block.id === 'string' && 
           typeof block.startTime === 'number' && 
@@ -169,6 +227,7 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
         );
         
         if (isValidBlocks) {
+          console.log('✅ Setting time record blocks:', loadedBlocks.length);
           setBlocks(loadedBlocks);
           blocksRef.current = loadedBlocks;
           
@@ -183,11 +242,13 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
           
           hasLoadedRef.current[selectedDate] = true;
         } else {
+          console.warn('⚠️ Invalid blocks data, clearing:', loadedBlocks);
           setBlocks([]);
           blocksRef.current = [];
           hasLoadedRef.current[selectedDate] = true;
         }
       } else {
+        console.log('ℹ️ No blocks data, setting empty array');
         setBlocks([]);
         blocksRef.current = [];
         hasLoadedRef.current[selectedDate] = true;
@@ -412,8 +473,9 @@ export default function TimeRecordPanel({ selectedDate, onReset, isCollapsed = f
       if (isAuthenticated && user) {
         try {
           await timeRecordService.saveTimeRecordData(dataToSave);
+          console.log('✅ Time record data saved to Firebase:', dataToSave.date, 'blocks:', blocksToSave.length);
         } catch (error) {
-          console.error('Failed to save data to Firebase:', error);
+          console.error('❌ Failed to save time record data to Firebase:', error);
         }
       }
     } catch (error) {

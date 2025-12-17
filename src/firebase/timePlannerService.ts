@@ -34,39 +34,53 @@ export async function saveTimePlannerData(data: TimePlannerData): Promise<void> 
   }
 
   const dataRef = doc(firestore, `users/${user.uid}/time-planner-data/${data.date}`);
-  await setDoc(dataRef, {
-    ...data,
+  const dataToSave = {
+    date: data.date,
+    blocks: data.blocks || [],
+    categories: data.categories || [],
     updatedAt: Timestamp.now(),
-  });
+  };
+  console.log('💾 Saving time planner data to Firestore:', data.date, 'blocks:', dataToSave.blocks.length);
+  await setDoc(dataRef, dataToSave);
 }
 
 /**
  * 시간 계획 데이터 불러오기 (날짜별)
  */
 export async function getTimePlannerData(date: DateString): Promise<TimePlannerData | null> {
+  console.log('🔍 getTimePlannerData called for date:', date);
   const user = getCurrentUser();
   if (!user) {
+    console.log('❌ No user authenticated');
     return null;
   }
+  console.log('✅ User authenticated:', user.uid);
 
   const firestore = getFirestoreInstance();
   if (!firestore) {
+    console.log('❌ Firestore not initialized');
     return null;
   }
+  console.log('✅ Firestore initialized');
 
   const dataRef = doc(firestore, `users/${user.uid}/time-planner-data/${date}`);
+  console.log('📄 Fetching document from path:', `users/${user.uid}/time-planner-data/${date}`);
   const snapshot = await getDoc(dataRef);
 
   if (!snapshot.exists()) {
+    console.log('ℹ️ No time planner data found in Firestore for:', date);
     return null;
   }
 
   const data = snapshot.data();
-  return {
+  console.log('📥 Raw data from Firestore:', data);
+  const result = {
     date: data.date,
     blocks: data.blocks || [],
     categories: data.categories || [],
   } as TimePlannerData;
+  console.log('📥 Retrieved time planner data from Firestore:', result.date, 'blocks:', result.blocks.length, 'blocks array:', result.blocks);
+  return result;
 }
 
 /**
@@ -153,39 +167,53 @@ export async function saveTimeRecordData(data: TimePlannerData): Promise<void> {
   }
 
   const dataRef = doc(firestore, `users/${user.uid}/time-record-data/${data.date}`);
-  await setDoc(dataRef, {
-    ...data,
+  const dataToSave = {
+    date: data.date,
+    blocks: data.blocks || [],
+    categories: data.categories || [],
     updatedAt: Timestamp.now(),
-  });
+  };
+  console.log('💾 Saving time record data to Firestore:', data.date, 'blocks:', dataToSave.blocks.length, 'data:', dataToSave);
+  await setDoc(dataRef, dataToSave);
 }
 
 /**
  * 시간 기록 데이터 불러오기 (날짜별)
  */
 export async function getTimeRecordData(date: DateString): Promise<TimePlannerData | null> {
+  console.log('🔍 getTimeRecordData called for date:', date);
   const user = getCurrentUser();
   if (!user) {
+    console.log('❌ No user authenticated');
     return null;
   }
+  console.log('✅ User authenticated:', user.uid);
 
   const firestore = getFirestoreInstance();
   if (!firestore) {
+    console.log('❌ Firestore not initialized');
     return null;
   }
+  console.log('✅ Firestore initialized');
 
   const dataRef = doc(firestore, `users/${user.uid}/time-record-data/${date}`);
+  console.log('📄 Fetching document from path:', `users/${user.uid}/time-record-data/${date}`);
   const snapshot = await getDoc(dataRef);
 
   if (!snapshot.exists()) {
+    console.log('ℹ️ No time record data found in Firestore for:', date);
     return null;
   }
 
   const data = snapshot.data();
-  return {
+  console.log('📥 Raw data from Firestore:', data);
+  const result = {
     date: data.date,
     blocks: data.blocks || [],
     categories: data.categories || [],
   } as TimePlannerData;
+  console.log('📥 Retrieved time record data from Firestore:', result.date, 'blocks:', result.blocks.length, 'blocks array:', result.blocks);
+  return result;
 }
 
 /**

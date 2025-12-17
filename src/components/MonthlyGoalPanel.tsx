@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth';
+import * as settingsService from '../firebase/settingsService';
 import './MonthlyGoalPanel.css';
 
 interface MonthlyGoalPanelProps {
@@ -19,6 +21,7 @@ export default function MonthlyGoalPanel({
   isCollapsed = false,
   onToggleCollapse,
 }: MonthlyGoalPanelProps) {
+  const { user, isAuthenticated } = useFirebaseAuth();
   const [goals, setGoals] = useState<MonthlyGoalItem[]>(() => 
     Array.from({ length: 5 }, (_, i) => ({
       id: `goal-${i}`,
@@ -26,6 +29,8 @@ export default function MonthlyGoalPanel({
       completed: false,
     }))
   );
+  const isInitialLoadRef = useRef(true);
+  const hasSyncedRef = useRef<string | false>(false);
 
   // 현재 월의 키 생성 (YYYY-MM 형식)
   const getCurrentMonthKey = (date: string): string => {
@@ -35,28 +40,71 @@ export default function MonthlyGoalPanel({
 
   const monthKey = getCurrentMonthKey(selectedDate);
 
-  // 로드 저장된 목표
+  // 로드 저장된 목표 (localStorage + Firebase)
   useEffect(() => {
-    const saved = localStorage.getItem('monthly-goals');
-    if (saved) {
-      try {
-        const allGoals: Record<string, MonthlyGoalItem[]> = JSON.parse(saved);
-        const monthGoals = allGoals[monthKey];
-        if (monthGoals && Array.isArray(monthGoals)) {
-          // 저장된 목표와 기본 5개 목표 병합
-          const mergedGoals = Array.from({ length: 5 }, (_, i) => 
-            monthGoals[i] || { id: `goal-${i}`, text: '', completed: false }
-          );
-          setGoals(mergedGoals);
-        }
-      } catch (e) {
-        console.error('Failed to load monthly goals:', e);
-      }
-    }
-  }, [monthKey]);
+    const loadGoals = async () => {
+      isInitialLoadRef.current = true;
+      let monthGoals: MonthlyGoalItem[] | null = null;
 
-  // 목표 저장
-  const saveGoals = (updatedGoals: MonthlyGoalItem[]) => {
+      // 1. localStorage에서 로드
+      const saved = localStorage.getItem('monthly-goals');
+      if (saved) {
+        try {
+          const allGoals: Record<string, MonthlyGoalItem[]> = JSON.parse(saved);
+          monthGoals = allGoals[monthKey] || null;
+        } catch (e) {
+          console.error('Failed to load monthly goals from localStorage:', e);
+        }
+      }
+
+      // 2. Firebase에서 로드 (인증된 경우)
+      if (isAuthenticated && user) {
+        // 사용자 변경 시 hasSyncedRef 리셋
+        const currentUserId = user.uid;
+        if (hasSyncedRef.current && typeof hasSyncedRef.current === 'string' && hasSyncedRef.current !== currentUserId) {
+          hasSyncedRef.current = false;
+        }
+
+        if (!hasSyncedRef.current) {
+          try {
+            console.log('📥 Loading monthly goals from Firebase for:', monthKey);
+            const firebaseGoals = await settingsService.getMonthlyGoals(monthKey);
+            if (firebaseGoals && Array.isArray(firebaseGoals)) {
+              console.log('📥 Loaded monthly goals from Firebase:', firebaseGoals.length);
+              // Firebase 데이터가 있으면 우선 사용
+              monthGoals = firebaseGoals;
+            } else if (monthGoals && monthGoals.length > 0) {
+              // Firebase에 없고 로컬에만 있으면 Firebase에 저장
+              console.log('💾 Saving local monthly goals to Firebase...');
+              await settingsService.saveMonthlyGoals(monthKey, monthGoals);
+            }
+            hasSyncedRef.current = currentUserId;
+          } catch (error) {
+            console.error('Failed to load monthly goals from Firebase:', error);
+          }
+        }
+      } else {
+        hasSyncedRef.current = false;
+      }
+
+      // 3. 데이터 적용
+      if (monthGoals && Array.isArray(monthGoals)) {
+        // 저장된 목표와 기본 5개 목표 병합
+        const mergedGoals = Array.from({ length: 5 }, (_, i) => 
+          monthGoals[i] || { id: `goal-${i}`, text: '', completed: false }
+        );
+        setGoals(mergedGoals);
+      }
+      
+      isInitialLoadRef.current = false;
+    };
+
+    loadGoals();
+  }, [monthKey, isAuthenticated, user]);
+
+  // 목표 저장 (localStorage + Firebase)
+  const saveGoals = async (updatedGoals: MonthlyGoalItem[]) => {
+    // localStorage에 저장
     const saved = localStorage.getItem('monthly-goals');
     let allGoals: Record<string, MonthlyGoalItem[]> = {};
     if (saved) {
@@ -68,6 +116,16 @@ export default function MonthlyGoalPanel({
     }
     allGoals[monthKey] = updatedGoals;
     localStorage.setItem('monthly-goals', JSON.stringify(allGoals));
+
+    // Firebase에 저장 (인증된 경우, 초기 로드 중이 아닐 때)
+    if (isAuthenticated && user && !isInitialLoadRef.current) {
+      try {
+        await settingsService.saveMonthlyGoals(monthKey, updatedGoals);
+        console.log('✅ Monthly goals saved to Firebase:', monthKey);
+      } catch (error) {
+        console.error('Failed to save monthly goals to Firebase:', error);
+      }
+    }
   };
 
   const handleGoalChange = (index: number, text: string) => {

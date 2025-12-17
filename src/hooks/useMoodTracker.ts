@@ -12,6 +12,12 @@ export function useMoodTracker() {
 
   // 로컬 스토리지와 Firebase에서 불러오기
   useEffect(() => {
+    // 인증 상태가 변경되면 동기화 플래그 리셋
+    if (!isAuthenticated || !user) {
+      hasSyncedRef.current = false;
+      return;
+    }
+    
     const loadData = async () => {
       // 1. localStorage에서 불러오기
       let localMoods: MoodEntry[] = [];
@@ -47,7 +53,7 @@ export function useMoodTracker() {
           console.error('Failed to load moods from Firebase:', error);
           setMoods(localMoods);
         }
-      } else {
+      } else if (!hasSyncedRef.current) {
         setMoods(localMoods);
       }
     };

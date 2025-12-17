@@ -12,7 +12,7 @@ export function useEvents() {
   const [isSyncing, setIsSyncing] = useState(false);
   const { isAuthenticated: isGoogleAuthenticated } = useGoogleSync();
   const { user, isAuthenticated: isFirebaseAuthenticated } = useFirebaseAuth();
-  const hasSyncedFirebaseRef = useRef(false);
+  const hasSyncedFirebaseRef = useRef<string | false>(false);
 
   // 이벤트 불러오기 (Google API 또는 로컬 스토리지)
   useEffect(() => {
@@ -29,27 +29,43 @@ export function useEvents() {
       })() : [];
 
       // Firebase에서 불러오기 (인증된 경우, Google Calendar보다 우선)
-      if (isFirebaseAuthenticated && user && !hasSyncedFirebaseRef.current) {
-        try {
-          const firebaseEvents = await eventService.getAllEvents();
-          
-          if (firebaseEvents.length > 0) {
-            // Firebase 데이터와 로컬 데이터 병합 (로컬 데이터 우선)
-            const mergedEvents = mergeEvents(localEvents, firebaseEvents);
-            setEvents(mergedEvents);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedEvents));
-            hasSyncedFirebaseRef.current = true;
-            return; // Firebase 데이터가 있으면 Google Calendar는 건너뜀
-          } else if (localEvents.length > 0) {
-            // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
-            await eventService.saveEventsBatch(localEvents);
-            hasSyncedFirebaseRef.current = true;
-          } else {
-            hasSyncedFirebaseRef.current = true;
-          }
-        } catch (error) {
-          console.error('Failed to load events from Firebase:', error);
+      if (isFirebaseAuthenticated && user) {
+        // 사용자 변경 시 hasSyncedFirebaseRef 리셋
+        const currentUserId = user.uid;
+        if (hasSyncedFirebaseRef.current && typeof hasSyncedFirebaseRef.current === 'string' && hasSyncedFirebaseRef.current !== currentUserId) {
+          hasSyncedFirebaseRef.current = false;
         }
+        
+        if (!hasSyncedFirebaseRef.current) {
+          try {
+            console.log('📥 Loading events from Firebase...');
+            const firebaseEvents = await eventService.getAllEvents();
+            console.log('📥 Loaded events from Firebase:', firebaseEvents.length);
+            
+            if (firebaseEvents.length > 0) {
+              // Firebase 데이터와 로컬 데이터 병합 (로컬 데이터 우선)
+              const mergedEvents = mergeEvents(localEvents, firebaseEvents);
+              setEvents(mergedEvents);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedEvents));
+              hasSyncedFirebaseRef.current = currentUserId;
+              console.log('✅ Events synced from Firebase:', mergedEvents.length);
+              return; // Firebase 데이터가 있으면 Google Calendar는 건너뜀
+            } else if (localEvents.length > 0) {
+              // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
+              console.log('💾 Saving local events to Firebase...');
+              await eventService.saveEventsBatch(localEvents);
+              hasSyncedFirebaseRef.current = currentUserId;
+              console.log('✅ Local events saved to Firebase');
+            } else {
+              hasSyncedFirebaseRef.current = currentUserId;
+            }
+          } catch (error) {
+            console.error('Failed to load events from Firebase:', error);
+          }
+        }
+      } else {
+        // 로그아웃 시 리셋
+        hasSyncedFirebaseRef.current = false;
       }
       
       if (isGoogleAuthenticated && window.electronAPI) {
@@ -228,6 +244,13 @@ export function useEvents() {
           setEvents(updatedEvents);
           // 로컬 스토리지에도 저장 (백업)
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+          
+          // Firebase에 저장 (인증된 경우)
+          if (isFirebaseAuthenticated && user) {
+            eventService.saveEvent(newEvent).catch(error => {
+              console.error('Failed to save event to Firebase:', error);
+            });
+          }
         } else {
           throw new Error(result.error || 'Failed to create event');
         }
@@ -248,6 +271,13 @@ export function useEvents() {
         setEvents(updatedEvents);
         // 로컬 스토리지에도 저장
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+        
+        // Firebase에 저장 (인증된 경우)
+        if (isFirebaseAuthenticated && user) {
+          eventService.saveEvent(newEvent).catch(error => {
+            console.error('Failed to save event to Firebase:', error);
+          });
+        }
       }
     } else {
       // Google API 미인증 시 로컬 스토리지에 저장
@@ -265,6 +295,13 @@ export function useEvents() {
       setEvents(updatedEvents);
       // 로컬 스토리지에도 저장
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isFirebaseAuthenticated && user) {
+        eventService.saveEvent(newEvent).catch(error => {
+          console.error('Failed to save event to Firebase:', error);
+        });
+      }
     }
   };
 
@@ -340,6 +377,16 @@ export function useEvents() {
             );
             setEvents(updatedEvents);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+            
+            // Firebase에 저장 (인증된 경우)
+            if (isFirebaseAuthenticated && user) {
+              const updatedEvent = updatedEvents.find(e => e.id === id);
+              if (updatedEvent) {
+                eventService.saveEvent(updatedEvent).catch(error => {
+                  console.error('Failed to save event to Firebase:', error);
+                });
+              }
+            }
           } else {
             throw new Error(result.error || 'Failed to update event');
           }
@@ -375,6 +422,16 @@ export function useEvents() {
             );
             setEvents(updatedEvents);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+            
+            // Firebase에 저장 (인증된 경우)
+            if (isFirebaseAuthenticated && user) {
+              const updatedEvent = updatedEvents.find(e => e.id === id);
+              if (updatedEvent) {
+                eventService.saveEvent(updatedEvent).catch(error => {
+                  console.error('Failed to save event to Firebase:', error);
+                });
+              }
+            }
           } else {
             throw new Error(result.error || 'Failed to update event');
           }
@@ -398,6 +455,16 @@ export function useEvents() {
         setEvents(updatedEvents);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
         console.log('💾 로컬에만 업데이트됨:', updatedEvents.find(e => e.id === id));
+        
+        // Firebase에 저장 (인증된 경우)
+        if (isFirebaseAuthenticated && user) {
+          const updatedEvent = updatedEvents.find(e => e.id === id);
+          if (updatedEvent) {
+            eventService.saveEvent(updatedEvent).catch(error => {
+              console.error('Failed to save event to Firebase:', error);
+            });
+          }
+        }
       }
     } else {
       // Google API 미인증 시 로컬만 업데이트
@@ -417,6 +484,16 @@ export function useEvents() {
       setEvents(updatedEvents);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
       console.log('💾 로컬에만 업데이트됨 (Google API 미인증):', updatedEvents.find(e => e.id === id));
+      
+      // Firebase에 저장 (인증된 경우)
+      if (isFirebaseAuthenticated && user) {
+        const updatedEvent = updatedEvents.find(e => e.id === id);
+        if (updatedEvent) {
+          eventService.saveEvent(updatedEvent).catch(error => {
+            console.error('Failed to save event to Firebase:', error);
+          });
+        }
+      }
     }
   };
 

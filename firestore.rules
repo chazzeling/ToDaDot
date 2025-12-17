@@ -71,6 +71,11 @@ service cloud.firestore {
     match /users/{userId}/time-record-categories/{categoryId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    
+    // 월별 목표 읽기/쓰기 (인증된 사용자만 자신의 월별 목표 수정 가능)
+    match /users/{userId}/monthly-goals/{monthKey} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }
 
