@@ -5,7 +5,7 @@ import TextFormatToolbar from './TextFormatToolbar';
 import RichTextEditor from './RichTextEditor';
 import MoodColorPicker from './MoodColorPicker';
 import TimePicker from './TimePicker';
-import { Clock, Nut, Bed, Target, ThumbsUp, Paintbrush, BadgeCheck } from 'lucide-react';
+import { Clock, Nut, Bed, Target, ThumbsUp, Paintbrush, BadgeCheck, Pill, X, ChevronDown, ChevronUp, PawPrint } from 'lucide-react';
 import './DiaryTab.css';
 
 interface DiaryTabProps {
@@ -25,9 +25,56 @@ interface DiaryEntry {
   sleepEnd: string; // "HH:mm" 형식
   meals: string;
   diary: string;
+  symptoms?: string[]; // 증상 태그 배열
 }
 
 const STORAGE_KEY = 'diary-entries';
+
+// 무드 트래킹용 PawPrint 컴포넌트
+function MoodPawPrints({ color }: { color: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pawCount, setPawCount] = useState(5);
+  
+  useEffect(() => {
+    const updatePawCount = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        // 너비에 따라 paw 개수 조절 (약 40px당 1개)
+        const count = Math.max(3, Math.min(10, Math.floor(width / 40)));
+        setPawCount(count);
+      }
+    };
+    
+    updatePawCount();
+    window.addEventListener('resize', updatePawCount);
+    return () => window.removeEventListener('resize', updatePawCount);
+  }, []);
+  
+  return (
+    <div 
+      ref={containerRef}
+      style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '6px',
+        padding: '12px',
+        width: '100%',
+        minHeight: '50px',
+      }}
+    >
+      {Array.from({ length: pawCount }).map((_, index) => (
+        <PawPrint
+          key={index}
+          size={24}
+          fill={color}
+          color={color}
+          style={{ flexShrink: 0 }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // 일기 탭의 rich-text-editor에 내용이 있는 날짜 목록 반환
 export function getDatesWithDiaryContent(): DateString[] {
@@ -65,7 +112,42 @@ export default function DiaryTab({
     sleepEnd: '',
     meals: '',
     diary: '',
+    symptoms: [],
   }));
+  
+  // 저장된 내용 표시용 상태
+  const [savedContents, setSavedContents] = useState<{
+    goal: string;
+    goodThings: string;
+    meals: string;
+  }>({
+    goal: '',
+    goodThings: '',
+    meals: '',
+  });
+  
+  // 증상 입력 상태
+  const [symptomInput, setSymptomInput] = useState('');
+  
+  // 접기/펼치기 상태
+  const [collapsedFields, setCollapsedFields] = useState<{
+    goal: boolean;
+    goodThings: boolean;
+    meals: boolean;
+    symptoms: boolean;
+  }>({
+    goal: false,
+    goodThings: false,
+    meals: false,
+    symptoms: false,
+  });
+  
+  const toggleFieldCollapse = useCallback((field: 'goal' | 'goodThings' | 'meals' | 'symptoms') => {
+    setCollapsedFields(prev => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  }, []);
 
   const [showMoodPicker, setShowMoodPicker] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -135,6 +217,20 @@ export default function DiaryTab({
       return moodColorNames[color];
     }
     
+    // 커스텀 색상 배열에서 찾기
+    try {
+      const customColorsSaved = localStorage.getItem('mood-custom-colors');
+      if (customColorsSaved) {
+        const customColors: Array<{ color: string; name: string }> = JSON.parse(customColorsSaved);
+        const customColor = customColors.find(c => c.color === color || c.color.toLowerCase() === color.toLowerCase());
+        if (customColor) {
+          return customColor.name;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load custom colors:', error);
+    }
+    
     // 기본 색상 이름 매핑
     const defaultColorNames: Record<string, string> = {
       '#ffccceff': '밝은 분홍',
@@ -181,8 +277,15 @@ export default function DiaryTab({
             goodThings: typeof entry.goodThings === 'string' ? entry.goodThings : '',
             meals: typeof entry.meals === 'string' ? entry.meals : '',
             diary: typeof entry.diary === 'string' ? entry.diary : '',
+            symptoms: Array.isArray(entry.symptoms) ? entry.symptoms : [],
           };
           setDiaryEntry(validatedEntry);
+          // 저장된 내용도 업데이트
+          setSavedContents({
+            goal: validatedEntry.goal,
+            goodThings: validatedEntry.goodThings,
+            meals: validatedEntry.meals,
+          });
         } else {
           setDiaryEntry({
             date: selectedDate,
@@ -192,6 +295,12 @@ export default function DiaryTab({
             sleepEnd: '',
             meals: '',
             diary: '',
+            symptoms: [],
+          });
+          setSavedContents({
+            goal: '',
+            goodThings: '',
+            meals: '',
           });
         }
       } catch (e) {
@@ -204,6 +313,12 @@ export default function DiaryTab({
           sleepEnd: '',
           meals: '',
           diary: '',
+          symptoms: [],
+        });
+        setSavedContents({
+          goal: '',
+          goodThings: '',
+          meals: '',
         });
       }
     } else {
@@ -215,6 +330,12 @@ export default function DiaryTab({
         sleepEnd: '',
         meals: '',
         diary: '',
+        symptoms: [],
+      });
+      setSavedContents({
+        goal: '',
+        goodThings: '',
+        meals: '',
       });
     }
   }, [selectedDate]);
@@ -239,10 +360,43 @@ export default function DiaryTab({
     setCompletedFields(prev => ({ ...prev, [field]: true }));
     saveEntry(diaryEntry);
     
+    // 저장된 내용 업데이트
+    if (field === 'goal' || field === 'goodThings' || field === 'meals') {
+      setSavedContents(prev => ({
+        ...prev,
+        [field]: diaryEntry[field],
+      }));
+    }
+    
     // 1초 후 애니메이션 제거
     setTimeout(() => {
       setCompletedFields(prev => ({ ...prev, [field]: false }));
     }, 1000);
+  }, [diaryEntry, saveEntry]);
+  
+  // 증상 추가
+  const handleAddSymptom = useCallback(() => {
+    if (symptomInput.trim()) {
+      const updatedEntry = {
+        ...diaryEntry,
+        symptoms: [...(diaryEntry.symptoms || []), symptomInput.trim()],
+      };
+      setDiaryEntry(updatedEntry);
+      saveEntry(updatedEntry);
+      setSymptomInput('');
+    }
+  }, [symptomInput, diaryEntry, saveEntry]);
+  
+  // 증상 삭제
+  const handleRemoveSymptom = useCallback((index: number) => {
+    const updatedSymptoms = [...(diaryEntry.symptoms || [])];
+    updatedSymptoms.splice(index, 1);
+    const updatedEntry = {
+      ...diaryEntry,
+      symptoms: updatedSymptoms,
+    };
+    setDiaryEntry(updatedEntry);
+    saveEntry(updatedEntry);
   }, [diaryEntry, saveEntry]);
 
   // 시각을 분으로 변환 (24시간 범위, 0~1440분)
@@ -460,21 +614,37 @@ export default function DiaryTab({
                     <Target size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                     오늘의 목표
                   </label>
-                  <button
-                    className="diary-complete-btn"
-                    onClick={() => handleFieldComplete('goal')}
-                    title="입력 완료"
-                  >
-                    <BadgeCheck size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      className="diary-collapse-btn"
+                      onClick={() => toggleFieldCollapse('goal')}
+                      title={collapsedFields.goal ? "펼치기" : "접기"}
+                    >
+                      {collapsedFields.goal ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                    </button>
+                    <button
+                      className="diary-complete-btn"
+                      onClick={() => handleFieldComplete('goal')}
+                      title="입력 완료"
+                    >
+                      <BadgeCheck size={16} />
+                    </button>
+                  </div>
                 </div>
-                <textarea
-                  value={diaryEntry.goal}
-                  onChange={(e) => handleFieldChange('goal', e.target.value)}
-                  placeholder="기록하기 🍀"
-                  className={`diary-input ${completedFields.goal ? 'completed' : ''}`}
-                  rows={3}
-                />
+                {!collapsedFields.goal && (
+                  <textarea
+                    value={diaryEntry.goal}
+                    onChange={(e) => handleFieldChange('goal', e.target.value)}
+                    placeholder="기록하기 🍀"
+                    className={`diary-input ${completedFields.goal ? 'completed' : ''}`}
+                    rows={1}
+                  />
+                )}
+                {savedContents.goal && (
+                  <div className="diary-saved-note">
+                    {savedContents.goal}
+                  </div>
+                )}
               </div>
 
               {/* 2. 오늘 잘한 일 */}
@@ -484,21 +654,37 @@ export default function DiaryTab({
                     <ThumbsUp size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                     오늘 잘한 일
                   </label>
-                  <button
-                    className="diary-complete-btn"
-                    onClick={() => handleFieldComplete('goodThings')}
-                    title="입력 완료"
-                  >
-                    <BadgeCheck size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      className="diary-collapse-btn"
+                      onClick={() => toggleFieldCollapse('goodThings')}
+                      title={collapsedFields.goodThings ? "펼치기" : "접기"}
+                    >
+                      {collapsedFields.goodThings ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                    </button>
+                    <button
+                      className="diary-complete-btn"
+                      onClick={() => handleFieldComplete('goodThings')}
+                      title="입력 완료"
+                    >
+                      <BadgeCheck size={16} />
+                    </button>
+                  </div>
                 </div>
-                <textarea
-                  value={diaryEntry.goodThings}
-                  onChange={(e) => handleFieldChange('goodThings', e.target.value)}
-                  placeholder="기록하기 ✌️"
-                  className={`diary-input ${completedFields.goodThings ? 'completed' : ''}`}
-                  rows={3}
-                />
+                {!collapsedFields.goodThings && (
+                  <textarea
+                    value={diaryEntry.goodThings}
+                    onChange={(e) => handleFieldChange('goodThings', e.target.value)}
+                    placeholder="기록하기 ✌️"
+                    className={`diary-input ${completedFields.goodThings ? 'completed' : ''}`}
+                    rows={1}
+                  />
+                )}
+                {savedContents.goodThings && (
+                  <div className="diary-saved-note">
+                    {savedContents.goodThings}
+                  </div>
+                )}
               </div>
 
               {/* 4. 오늘의 식단 */}
@@ -508,83 +694,165 @@ export default function DiaryTab({
                     <Nut size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                     오늘의 식단
                   </label>
-                  <button
-                    className="diary-complete-btn"
-                    onClick={() => handleFieldComplete('meals')}
-                    title="입력 완료"
-                  >
-                    <BadgeCheck size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      className="diary-collapse-btn"
+                      onClick={() => toggleFieldCollapse('meals')}
+                      title={collapsedFields.meals ? "펼치기" : "접기"}
+                    >
+                      {collapsedFields.meals ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                    </button>
+                    <button
+                      className="diary-complete-btn"
+                      onClick={() => handleFieldComplete('meals')}
+                      title="입력 완료"
+                    >
+                      <BadgeCheck size={16} />
+                    </button>
+                  </div>
                 </div>
-                <textarea
-                  value={diaryEntry.meals}
-                  onChange={(e) => handleFieldChange('meals', e.target.value)}
-                  placeholder="기록하기 🍳"
-                  className={`diary-input ${completedFields.meals ? 'completed' : ''}`}
-                  rows={3}
-                />
+                {!collapsedFields.meals && (
+                  <textarea
+                    value={diaryEntry.meals}
+                    onChange={(e) => handleFieldChange('meals', e.target.value)}
+                    placeholder="기록하기 🍳"
+                    className={`diary-input ${completedFields.meals ? 'completed' : ''}`}
+                    rows={1}
+                  />
+                )}
+                {savedContents.meals && (
+                  <div className="diary-saved-note">
+                    {savedContents.meals}
+                  </div>
+                )}
               </div>
 
-              {/* 무드 트래킹 */}
+              {/* 증상 기록 */}
               <div className="diary-field-wrapper">
                 <div className="diary-field-row">
                   <label>
-                    <Paintbrush size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                    무드 트래킹
+                    <Pill size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                    증상
                   </label>
-                </div>
-                <div className="mood-tracker-wrapper">
-                  {currentMood && (
-                    <div 
-                      className="mood-display"
-                      style={{ backgroundColor: currentMood.color }}
-                      onClick={() => setShowMoodPicker(true)}
+                  <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                    <button
+                      className="diary-collapse-btn"
+                      onClick={() => toggleFieldCollapse('symptoms')}
+                      title={collapsedFields.symptoms ? "펼치기" : "접기"}
                     >
-                      {getMoodColorName(currentMood.color)}
-                    </div>
-                  )}
-                  {!currentMood && (
-                    <button 
-                      className="mood-add-btn"
-                      onClick={() => setShowMoodPicker(true)}
-                    >
-                      무드 선택
+                      {collapsedFields.symptoms ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                     </button>
-                  )}
-                  {showMoodPicker && (
-                    <div className="mood-picker-overlay" onClick={() => setShowMoodPicker(false)}>
-                      <div className="mood-picker-container" onClick={(e) => e.stopPropagation()}>
-                        <MoodColorPicker
-                          onColorSelect={(color) => {
-                            // 색상 선택 시 즉시 저장
-                            if (onMoodSelect) {
-                              onMoodSelect(selectedDate, color);
-                            }
-                            setShowMoodPicker(false);
-                          }}
-                          onSave={(color) => {
-                            // 저장 버튼 클릭 시
-                            if (onMoodSelect) {
-                              onMoodSelect(selectedDate, color);
-                            }
-                            setShowMoodPicker(false);
-                          }}
-                          onCancel={() => {
-                            setShowMoodPicker(false);
-                          }}
-                          selectedColor={currentMood?.color}
-                          selectedDate={selectedDate}
-                        />
-                      </div>
-                    </div>
-                  )}
+                    {diaryEntry.symptoms && diaryEntry.symptoms.length > 0 && (
+                      <button
+                        onClick={() => {
+                          const updatedEntry = {
+                            ...diaryEntry,
+                            symptoms: [],
+                          };
+                          setDiaryEntry(updatedEntry);
+                          saveEntry(updatedEntry);
+                        }}
+                        className="diary-complete-btn"
+                        title="모든 증상 삭제"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                    <button
+                      className="diary-complete-btn"
+                      onClick={handleAddSymptom}
+                      disabled={!symptomInput.trim()}
+                      title="입력 완료"
+                    >
+                      <BadgeCheck size={16} />
+                    </button>
+                  </div>
                 </div>
+                {!collapsedFields.symptoms && (
+                  <input
+                    type="text"
+                    value={symptomInput}
+                    onChange={(e) => setSymptomInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSymptom();
+                      }
+                    }}
+                    placeholder={(diaryEntry.symptoms && diaryEntry.symptoms.length > 0) ? "증상 추가" : "기록하기 💊"}
+                    className="symptom-input"
+                  />
+                )}
+                {diaryEntry.symptoms && diaryEntry.symptoms.length > 0 && (
+                  <div className="symptom-tags">
+                    {diaryEntry.symptoms.map((symptom, index) => (
+                      <span key={index} className="symptom-tag">
+                        {symptom}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+
             </div>
           </div>
 
           {/* 우측 패널: 일기 작성 */}
           <div className="diary-right-panel">
+            {/* 무드 트래킹 */}
+            <div className="diary-field-wrapper" style={{ marginBottom: '16px' }}>
+              <div className="diary-field-row">
+                <label>
+                  <Paintbrush size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  무드 트래킹{currentMood && `: ${getMoodColorName(currentMood.color)}`}
+                </label>
+              </div>
+              <div className="mood-tracker-wrapper">
+                {currentMood ? (
+                  <div 
+                    className="mood-display"
+                    onClick={() => setShowMoodPicker(true)}
+                  >
+                    <MoodPawPrints color={currentMood.color} />
+                  </div>
+                ) : (
+                  <button 
+                    className="mood-add-btn"
+                    onClick={() => setShowMoodPicker(true)}
+                  >
+                    무드 선택
+                  </button>
+                )}
+                {showMoodPicker && (
+                  <div className="mood-picker-overlay" onClick={() => setShowMoodPicker(false)}>
+                    <div className="mood-picker-container" onClick={(e) => e.stopPropagation()}>
+                      <MoodColorPicker
+                        onColorSelect={(color) => {
+                          // 색상 선택 시 즉시 저장
+                          if (onMoodSelect) {
+                            onMoodSelect(selectedDate, color);
+                          }
+                          setShowMoodPicker(false);
+                        }}
+                        onSave={(color) => {
+                          // 저장 버튼 클릭 시
+                          if (onMoodSelect) {
+                            onMoodSelect(selectedDate, color);
+                          }
+                          setShowMoodPicker(false);
+                        }}
+                        onCancel={() => {
+                          setShowMoodPicker(false);
+                        }}
+                        selectedColor={currentMood?.color}
+                        selectedDate={selectedDate}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div className="diary-editor-wrapper">
               <div className="diary-field-row">
                 <label>일기</label>

@@ -350,27 +350,56 @@ export default function MoodColorPicker({
                             setCustomColors(updated);
                           }}
                         />
-                        <button
-                          onClick={() => {
-                            setShowColorPicker(null);
-                          }}
-                          style={{
-                            padding: '8px 16px',
-                            background: moodColor.color,
-                            color: isLight(moodColor.color) ? '#000000' : '#ffffff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <span>적용</span>
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => {
+                              setShowColorPicker(null);
+                            }}
+                            style={{
+                              padding: '8px 16px',
+                              background: moodColor.color,
+                              color: isLight(moodColor.color) ? '#000000' : '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span>적용</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentSelectedColor(moodColor.color);
+                              setShowColorPicker(null);
+                              if (onSave) {
+                                onSave(moodColor.color);
+                              } else {
+                                onColorSelect(moodColor.color);
+                              }
+                            }}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'var(--accent-color)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span>저장</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
