@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { TodoItem, Quadrant } from '../types';
 import { useQuadrantColors, ColorPreset, COLOR_PRESETS } from '../hooks/useQuadrantColors';
@@ -815,6 +816,27 @@ function QuadrantBox({
     }
     setShowDatePicker(null);
     setNewDate('');
+  };
+
+  const handleDuplicateToday = (todo: TodoItem) => {
+    duplicateTodoToday(todo.id);
+    setOpenMenuId(null);
+    setMenuPosition(null);
+  };
+
+  const handleDuplicateToAnotherDay = (todo: TodoItem) => {
+    setShowDuplicateDatePicker(todo.id);
+    setDuplicateTargetDate(selectedDate);
+    setOpenMenuId(null);
+    setMenuPosition(null);
+  };
+
+  const handleSaveDuplicateDate = (todoId: string) => {
+    if (duplicateTargetDate) {
+      duplicateTodoToDate(todoId, duplicateTargetDate);
+    }
+    setShowDuplicateDatePicker(null);
+    setDuplicateTargetDate('');
   };
 
   return (

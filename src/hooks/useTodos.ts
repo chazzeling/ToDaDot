@@ -768,12 +768,13 @@ export function useTodos() {
       .sort((a, b) => (a.focusOrder ?? 0) - (b.focusOrder ?? 0));
   }, [todos]);
 
-  // 완료된 할 일을 오늘로 복제
+  // 완료된 할 일을 "진짜 오늘 날짜"로 복제
   const duplicateTodoToday = useCallback(async (id: string) => {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
 
-    const today = getTodayDateString();
+    const today: DateString = getTodayDateString();
+
     const newTodo: TodoItem = {
       ...todo,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),

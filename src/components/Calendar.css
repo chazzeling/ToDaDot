@@ -530,15 +530,15 @@
   display: flex;
   gap: 2px;
   align-items: center;
-  padding: 2px 4px;
+  padding: 4px 6px;
   border-left: 5px solid;
-  border-radius: 2px;
+  border-radius: 4px;
   font-size: 11px;
   overflow: hidden;
   cursor: grab;
   transition: all 0.2s;
-  min-height: 20px;
-  height: 20px;
+  min-height: 32px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.5);
   user-select: none;
 }

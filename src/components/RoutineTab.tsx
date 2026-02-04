@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { Routine } from '../hooks/useRoutines';
 import { DateString, TodoItem } from '../types';

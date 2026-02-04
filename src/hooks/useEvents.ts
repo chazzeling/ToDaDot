@@ -43,6 +43,9 @@ export function useEvents() {
           } else if (localEvents.length > 0) {
             // Firebase에 데이터가 없고 로컬에만 있으면 Firebase에 저장
             await eventService.saveEventsBatch(localEvents);
+            // 방금 저장한 로컬 데이터를 바로 상태로 반영 (앱 재시작 시 데이터가 사라지는 것처럼 보이는 현상 방지)
+            setEvents(localEvents);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localEvents));
             hasSyncedFirebaseRef.current = true;
           } else {
             hasSyncedFirebaseRef.current = true;

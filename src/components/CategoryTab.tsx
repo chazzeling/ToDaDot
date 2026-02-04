@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { TodoItem, Category } from '../types';
 import CategoryColorSettings from './CategoryColorSettings';

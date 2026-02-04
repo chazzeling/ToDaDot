@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState, useRef, useCallback } from 'react';
 import { TodoItem, Category, Quadrant, DateString } from '../types';
 import { Bone, Dog, RotateCcw, Bookmark, BookmarkCheck, ArrowDownUp } from 'lucide-react';

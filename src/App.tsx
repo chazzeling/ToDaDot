@@ -1,10 +1,13 @@
+import type React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import MemoTimeBottomSheet from './components/MemoTimeBottomSheet';
 import * as todoService from './firebase/todoService';
 import Calendar from './components/Calendar';
 import QuadrantTab from './components/QuadrantTab';
 import CategoryTab from './components/CategoryTab';
 import EventTab from './components/EventTab';
 import DailyFocusTab from './components/DailyFocusTab';
+import WeeklyTimeRecordPanel from './components/WeeklyTimeRecordPanel';
 import RoutineTab from './components/RoutineTab';
 import TimePlannerPanel from './components/TimePlannerPanel';
 import TimeRecordPanel from './components/TimeRecordPanel';
@@ -79,6 +82,99 @@ function App() {
   } = useTodos();
 
   const { categories, createCategory, updateCategory, deleteCategory: deleteCategoryOriginal, reorderCategories } = useCategories();
+  
+  type TaskSchedule = {
+    id: string;
+    text: string;
+    completed: boolean;
+    date: DateString;
+    time?: string;
+    memo?: string;
+  };
+
+  const [taskSchedules, setTaskSchedules] = useState<TaskSchedule[]>(() => {
+    try {
+      const raw = localStorage.getItem('task-schedules-v1');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as TaskSchedule[];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((s) => ({
+        ...s,
+        time: s.time,
+        memo: s.memo,
+      }));
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('task-schedules-v1', JSON.stringify(taskSchedules));
+    } catch {
+      // ignore
+    }
+  }, [taskSchedules]);
+
+  const schedulesForSelectedDate = useMemo(
+    () => taskSchedules.filter((s) => s.date === selectedDate),
+    [taskSchedules, selectedDate]
+  );
+
+  const updateSchedule = useCallback(
+    (id: string, patch: Partial<TaskSchedule>) => {
+      setTaskSchedules((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
+      );
+    },
+    []
+  );
+
+  const addScheduleForDate = useCallback(
+    (date: DateString, text: string) => {
+      const value = text.trim();
+      if (!value) return;
+      setTaskSchedules((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.date === date && last.text === value) {
+          // React StrictMode 등으로 인한 중복 추가 방지
+          return prev;
+        }
+        return [
+          ...prev,
+          {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            text: value,
+            completed: false,
+            date,
+            time: undefined,
+            memo: undefined,
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const toggleSchedule = useCallback((id: string) => {
+    setTaskSchedules((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, completed: !s.completed } : s))
+    );
+  }, []);
+
+  const deleteSchedule = useCallback((id: string) => {
+    setTaskSchedules((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+  
+  const [scheduleMenuId, setScheduleMenuId] = useState<string | null>(null);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+  const [editingScheduleText, setEditingScheduleText] = useState('');
+  const [editingScheduleDateId, setEditingScheduleDateId] = useState<string | null>(null);
+  const [editingScheduleDate, setEditingScheduleDate] = useState<DateString | ''>('');
+  const [editingScheduleTimeId, setEditingScheduleTimeId] = useState<string | null>(null);
+  const [editingScheduleTime, setEditingScheduleTime] = useState<string>('');
+  const [editingScheduleMemoId, setEditingScheduleMemoId] = useState<string | null>(null);
+  const [editingScheduleMemo, setEditingScheduleMemo] = useState<string>('');
   
   // 고아 할 일 강제 진단 함수 (Firebase에서 직접 쿼리)
   const diagnoseOrphanTodos = useCallback(async () => {
@@ -268,14 +364,14 @@ function App() {
   const { setTab: setStickerTab, getStickers, currentTabId, addSticker, setStickers } = useStickerStore();
   const { routines, addRoutine, updateRoutine, deleteRoutine, reorderRoutines } = useRoutines();
 
-  const [activeTab, setActiveTab] = useState<'event' | 'tasks' | 'daily-focus' | 'memo'>('tasks');
+  const [activeTab, setActiveTab] = useState<'event' | 'tasks' | 'daily-focus' | 'weekly' | 'memo'>('tasks');
   const [tasksSubTab, setTasksSubTab] = useState<'quadrant' | 'category' | 'routine'>('quadrant');
   const [dailyFocusSubTab, setDailyFocusSubTab] = useState<'daily-focus' | 'diary'>('daily-focus');
   const [showSyncConfirm, setShowSyncConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   
   // 실제 내부 탭 ID 계산
-  const getInternalTab = (): 'event' | 'quadrant' | 'category' | 'daily-focus' | 'memo' | 'routine' | 'diary' => {
+  const getInternalTab = (): 'event' | 'quadrant' | 'category' | 'daily-focus' | 'weekly' | 'memo' | 'routine' | 'diary' => {
     if (activeTab === 'tasks') {
       return tasksSubTab;
     } else if (activeTab === 'daily-focus') {
@@ -287,18 +383,19 @@ function App() {
   const internalTab = getInternalTab();
   
   // 탭 이름 매핑: 내부 탭 ID -> 스토어 탭 ID
-  const tabNameMap: Record<'event' | 'quadrant' | 'category' | 'daily-focus' | 'memo' | 'routine' | 'diary', string> = {
+  const tabNameMap: Record<'event' | 'quadrant' | 'category' | 'daily-focus' | 'weekly' | 'memo' | 'routine' | 'diary', string> = {
     'event': 'Calendar',
     'quadrant': 'Matrix',
     'category': 'Category',
     'daily-focus': 'Daily Focus',
+    'weekly': 'Weekly',
     'diary': 'Diary',
     'memo': 'Memo',
     'routine': 'Routine',
   };
   
   // 탭 전환 시 스토어도 업데이트
-  const handleTabChange = (tab: 'event' | 'tasks' | 'daily-focus' | 'memo') => {
+  const handleTabChange = (tab: 'event' | 'tasks' | 'daily-focus' | 'weekly' | 'memo') => {
     setActiveTab(tab);
     // 스토어의 탭 ID로 변환하여 저장
     const currentInternalTab = tab === 'tasks' ? tasksSubTab : (tab === 'daily-focus' ? dailyFocusSubTab : tab);
@@ -1166,6 +1263,12 @@ function App() {
             Calendar
           </button>
           <button
+            className={`nav-btn ${activeTab === 'weekly' ? 'active' : ''}`}
+            onClick={() => handleTabChange('weekly')}
+          >
+            Weekly
+          </button>
+          <button
             className={`nav-btn ${activeTab === 'tasks' ? 'active' : ''}`}
             onClick={() => handleTabChange('tasks')}
           >
@@ -1526,6 +1629,12 @@ function App() {
             />
             </div>
           </div>
+        ) : activeTab === 'weekly' ? (
+          <main className="main-content">
+            <div className="content-area">
+              <WeeklyTimeRecordPanel />
+            </div>
+          </main>
         ) : null}
 
         {/* 사이드바: Tasks, Event, Memo 탭용 */}
@@ -1713,7 +1822,268 @@ function App() {
               </div>
             )}
             
-            <div className={`content-area ${moodTrackerMode ? 'mood-tracker-active' : ''}`}>
+      <div className={`content-area ${moodTrackerMode ? 'mood-tracker-active' : ''}`}>
+            {activeTab === 'tasks' && (tasksSubTab === 'quadrant' || tasksSubTab === 'category') && (
+              <div
+                className="task-schedule-bar"
+                style={{
+                  padding: '10px 20px',
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-primary)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>Schedule</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {schedulesForSelectedDate.length} 개
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                    이 일정은 Matrix와 Category에서 함께 보입니다.
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="예: 10:00 회의, 14:00 운동..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const target = e.currentTarget as HTMLInputElement;
+                        if (target.value.trim()) {
+                          addScheduleForDate(selectedDate, target.value);
+                          target.value = '';
+                        }
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      fontSize: 12,
+                      padding: '6px 8px',
+                      borderRadius: 6,
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+                {schedulesForSelectedDate.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}
+                  >
+                    {schedulesForSelectedDate.map((s) => (
+                      <div
+                        key={s.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '4px 6px',
+                          borderRadius: 6,
+                          backgroundColor: 'var(--bg-secondary)',
+                          position: 'relative',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={s.completed}
+                          onChange={() => toggleSchedule(s.id)}
+                          className="todo-checkbox acorn-checkbox"
+                          style={{ '--acorn-color': 'var(--accent-color)' } as React.CSSProperties}
+                        />
+                        <span
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            minWidth: 0,
+                          }}
+                        >
+                          {editingScheduleId === s.id ? (
+                            <input
+                              type="text"
+                              value={editingScheduleText}
+                              onChange={(e) => setEditingScheduleText(e.target.value)}
+                              onBlur={() => {
+                                const value = editingScheduleText.trim();
+                                if (value && editingScheduleId) {
+                                  updateSchedule(editingScheduleId, { text: value });
+                                }
+                                setEditingScheduleId(null);
+                                setEditingScheduleText('');
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const value = editingScheduleText.trim();
+                                  if (value && editingScheduleId) {
+                                    updateSchedule(editingScheduleId, { text: value });
+                                  }
+                                  setEditingScheduleId(null);
+                                  setEditingScheduleText('');
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  setEditingScheduleId(null);
+                                  setEditingScheduleText('');
+                                }
+                              }}
+                              style={{
+                                fontSize: 12,
+                                padding: '3px 4px',
+                                borderRadius: 4,
+                                border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                              }}
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: 'var(--text-primary)',
+                                textDecoration: 'none',
+                                opacity: s.completed ? 0.6 : 1,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {s.text}
+                            </span>
+                          )}
+                          {(s.time || s.memo) && (
+                            <span
+                              style={{
+                                marginTop: 2,
+                                fontSize: 11,
+                                color: 'var(--text-secondary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {s.time && <span>{s.time}</span>}
+                              {s.time && s.memo && <span> · </span>}
+                              {s.memo && <span>{s.memo}</span>}
+                            </span>
+                          )}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setScheduleMenuId((prev) => (prev === s.id ? null : s.id));
+                            setEditingScheduleId(null);
+                          }}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            padding: '0 4px',
+                          }}
+                          title="옵션"
+                        >
+                          ⋮
+                        </button>
+                        <button
+                          onClick={() => deleteSchedule(s.id)}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                          }}
+                          title="삭제"
+                        >
+                          ×
+                        </button>
+                        {scheduleMenuId === s.id && (
+                          <div
+                            style={{
+                              position: 'fixed',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              padding: '8px 10px',
+                              borderRadius: 8,
+                              backgroundColor: 'var(--bg-primary)',
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                              zIndex: 9999,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 4,
+                              fontSize: 11,
+                              minWidth: 160,
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', padding: '2px 4px' }}
+                              onClick={() => {
+                                setEditingScheduleId(s.id);
+                                setEditingScheduleText(s.text);
+                                setScheduleMenuId(null);
+                              }}
+                            >
+                              수정
+                            </button>
+                            <button
+                              style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', padding: '2px 4px' }}
+                              onClick={() => {
+                                setEditingScheduleDateId(s.id);
+                                setEditingScheduleDate(s.date);
+                                setScheduleMenuId(null);
+                              }}
+                            >
+                              날짜 변경
+                            </button>
+                            <button
+                              style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', padding: '2px 4px' }}
+                              onClick={() => {
+                                setEditingScheduleTimeId(s.id);
+                                setEditingScheduleTime(s.time || '');
+                                setScheduleMenuId(null);
+                              }}
+                            >
+                              시간
+                            </button>
+                            <button
+                              style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', padding: '2px 4px' }}
+                              onClick={() => {
+                                setEditingScheduleMemoId(s.id);
+                                setEditingScheduleMemo(s.memo || '');
+                                setScheduleMenuId(null);
+                              }}
+                            >
+                              메모
+                            </button>
+                            <button
+                              style={{ border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', padding: '2px 4px', color: 'var(--danger-color, #f44336)' }}
+                              onClick={() => {
+                                deleteSchedule(s.id);
+                                setScheduleMenuId(null);
+                              }}
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {isEventTabActive && (
               <>
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -1841,6 +2211,88 @@ function App() {
           </main>
         )}
       </div>
+
+      {/* 스케줄 편집 모달들 */}
+      {editingScheduleDateId && (
+        <div className="modal-overlay" onClick={() => { setEditingScheduleDateId(null); setEditingScheduleDate(''); }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>날짜 변경</h3>
+            <div className="modal-form">
+              <label>
+                날짜
+                <input
+                  type="date"
+                  value={editingScheduleDate}
+                  onChange={(e) => setEditingScheduleDate(e.target.value as DateString | '')}
+                  className="modal-input"
+                  autoFocus
+                />
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button className="modal-cancel" onClick={() => { setEditingScheduleDateId(null); setEditingScheduleDate(''); }}>
+                취소
+              </button>
+              <button
+                className="modal-confirm"
+                onClick={() => {
+                  if (editingScheduleDate && editingScheduleDateId) {
+                    updateSchedule(editingScheduleDateId, { date: editingScheduleDate as DateString });
+                  }
+                  setEditingScheduleDateId(null);
+                  setEditingScheduleDate('');
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingScheduleTimeId && (() => {
+        const schedule = taskSchedules.find((s) => s.id === editingScheduleTimeId);
+        return schedule ? (
+          <MemoTimeBottomSheet
+            isOpen={true}
+            onClose={() => {
+              setEditingScheduleTimeId(null);
+              setEditingScheduleTime('');
+            }}
+            type="time"
+            initialValue={schedule.time || ''}
+            onSave={(value) => {
+              updateSchedule(editingScheduleTimeId, { time: value });
+            }}
+            onDelete={() => {
+              updateSchedule(editingScheduleTimeId, { time: undefined });
+            }}
+          />
+        ) : null;
+      })()}
+
+      {editingScheduleMemoId && (() => {
+        const schedule = taskSchedules.find((s) => s.id === editingScheduleMemoId);
+        return schedule ? (
+          <MemoTimeBottomSheet
+            isOpen={true}
+            onClose={() => {
+              setEditingScheduleMemoId(null);
+              setEditingScheduleMemo('');
+            }}
+            type="memo"
+            initialValue={schedule.memo || ''}
+            onSave={(value) => {
+              updateSchedule(editingScheduleMemoId, {
+                memo: value.trim() || undefined,
+              });
+            }}
+            onDelete={() => {
+              updateSchedule(editingScheduleMemoId, { memo: undefined });
+            }}
+          />
+        ) : null;
+      })()}
 
       {/* 전역 스티커 오버레이 */}
       <StickerOverlayComponent 

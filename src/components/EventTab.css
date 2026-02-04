@@ -278,7 +278,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1100; /* 팝업 최상위 레이어 */
+  z-index: 1200; /* 팝업 최상위 레이어 (헤더 이미지보다 위) */
 }
 
 .modal-content {

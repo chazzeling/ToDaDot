@@ -1,7 +1,7 @@
 import './ConfirmDialog.css';
 
 interface ConfirmDialogProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   title?: string;
   message: string;
   confirmText?: string;
@@ -12,7 +12,7 @@ interface ConfirmDialogProps {
 }
 
 export default function ConfirmDialog({
-  isOpen,
+  isOpen = true,
   title,
   message,
   confirmText = '확인',
